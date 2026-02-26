@@ -1,0 +1,14 @@
+{
+  "api_key": {
+    "description": "API Key",
+    "type": "string",
+    "hint": "请前往 https://end.shallow.ink 获取秘钥",
+    "obvious_hint": true,
+    "default": ""
+  },
+  "auth_client_name": {
+    "description": "授权客户端名称",
+    "type": "string",
+    "default": "终末地机器人"
+  }
+}
