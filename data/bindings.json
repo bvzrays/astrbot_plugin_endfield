@@ -1,0 +1,15 @@
+{
+    "1372627285": [
+        {
+            "framework_token": "d26a1ba9-8398-46f4-ab83-fe541c26a0a3",
+            "binding_id": "69a068f0b5a8de447648fd70",
+            "role_id": "1009644456",
+            "nickname": "BvzRays",
+            "server_id": 1,
+            "login_type": "qr",
+            "is_active": true,
+            "is_primary": true,
+            "bind_time": 49173203
+        }
+    ]
+}
