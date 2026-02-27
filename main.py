@@ -14,7 +14,7 @@ from .core.user import UserManager, SimulateManager, AnnouncementManager, Maaend
 from .core.utils import get_message
 from .core.render import Renderer
 
-@register("astrbot_plugin_endfield", "bvzrays", "终末地协议终端插件", "v1.3.0", "https://github.com/bvzrays/astrbot_plugin_endfield")
+@register("astrbot_plugin_endfield", "bvzrays & 熵增项目组", "终末地协议终端", "v1.3.0", "https://github.com/bvzrays/astrbot_plugin_endfield")
 class EndfieldPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
