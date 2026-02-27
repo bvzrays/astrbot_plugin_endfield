@@ -165,5 +165,7 @@
 如有其它问题，请提交 Issue。
 > [!TIP]
 > 终末地-协议终端交流群，欢迎加入 [160759479](https://qm.qq.com/q/zZXruW6V4Q) 交流反馈。
+
 > [!TIP]
-> astrbot移植作者bvzrays插件交流反馈，欢迎加入 [870543663](https://qm.qq.com/q/kPxQZy5gg8) 交流反馈。
+> astrbot移植作者bvzrays插件反馈，加入 [870543663](https://qm.qq.com/q/kPxQZy5gg8) 。
+
