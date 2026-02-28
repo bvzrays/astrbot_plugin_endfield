@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="{{_res_path}}area/spaceship.css">
 </head>
+
 <body>
   <div class="spaceship-container">
     <!-- 顶部栏：左侧用户信息 + 中间标题 + 右侧 Logo -->
@@ -34,7 +36,8 @@
     <div class="room-list">
       {{each rooms room idx}}
       <div class="room-card has-bg">
-        <img class="room-bg-img" src="{{pluResPath}}img/帝江号{{room.bgIndex}}.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
+        <img class="room-bg-img" src="{{pluResPath}}img/帝江号{{room.bgIndex}}.png" alt=""
+          onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
         <div class="room-bg-overlay"></div>
         <!-- 房间头部 -->
         <div class="room-header">
@@ -71,12 +74,17 @@
             </div>
             <div class="char-card-stats">
               <div class="char-stat">
-                <span class="char-stat-label">体力</span>
-                <span class="char-stat-value">{{c.physicalStrength}}</span>
+                <span class="char-stat-label">心情</span>
+                <span class="char-stat-value">{{c.moodDisplay}}</span>
               </div>
               <div class="char-stat">
-                <span class="char-stat-label">好感</span>
-                <span class="char-stat-value char-stat-fav">{{c.favorability}}</span>
+                <span class="char-stat-label">信赖</span>
+                <span class="char-stat-value char-stat-fav" title="{{c.trustDisplay}}">
+                  <span class="char-stat-percent">{{c.trustPercent}}%</span>
+                  {{if c.trustLevelName}}
+                  <span class="trust-badge trust-{{c.trustLevelName}}">{{c.trustLevelName}}</span>
+                  {{/if}}
+                </span>
               </div>
             </div>
           </div>
@@ -94,8 +102,9 @@
 
     <!-- 页脚 -->
     <footer class="footer">
-      <div class="footer-text">{{@copyright}}</div>
+      <div class="footer-text">astrbot</div>
     </footer>
   </div>
 </body>
+
 </html>

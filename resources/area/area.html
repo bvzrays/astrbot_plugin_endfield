@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{title}}</title>
   <link rel="stylesheet" href="{{_res_path}}area/area.css">
 </head>
+
 <body>
   <div class="area-container">
     <!-- 顶部栏：左侧用户信息 + 中间标题 + 右侧 Logo -->
@@ -33,19 +35,24 @@
     <!-- 地区列表 -->
     {{each zones zone idx}}
     <div class="zone-card has-bg">
-      <img class="zone-bg-img" src="{{pluResPath}}img/{{zone.zoneName}}.png" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
+      <img class="zone-bg-img" src="{{pluResPath}}img/{{zone.zoneName}}.png" alt=""
+        onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
       <div class="zone-bg-overlay"></div>
       <!-- 地区头部 -->
       <div class="zone-header">
         <div class="zone-title-group">
-          <img class="zone-pin-icon" src="{{pluResPath}}img/{{zone.zoneName}}.svg" alt="" onerror="this.outerHTML='<span class=&quot;zone-pin-text&quot;>◎</span>'">
+          <img class="zone-pin-icon" src="{{pluResPath}}img/{{zone.zoneName}}.svg" alt=""
+            onerror="this.outerHTML='<span class=&quot;zone-pin-text&quot;>◎</span>'">
           <span class="zone-name">{{zone.zoneName}}</span>
           <span class="zone-level">Lv.{{zone.level}}</span>
         </div>
         <div class="zone-stats">
-          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/int_trchest_common.png" alt="宝箱">宝箱 <b>{{zone.totalChest}}</b></span>
-          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_pazzle.png" alt="拼图">拼图 <b>{{zone.totalPuzzle}}</b></span>
-          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_blackbox.png" alt="协议采录桩">协议采录桩 <b>{{zone.totalBlackbox}}</b></span>
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/int_trchest_common.png"
+              alt="宝箱">宝箱 <b>{{zone.totalChest}}</b></span>
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_pazzle.png"
+              alt="拼图">拼图 <b>{{zone.totalPuzzle}}</b></span>
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_blackbox.png"
+              alt="协议采录桩">协议采录桩 <b>{{zone.totalBlackbox}}</b></span>
         </div>
       </div>
 
@@ -62,7 +69,8 @@
             {{if s.officerName}}
             <div class="officer-card">
               {{if s.officerAvatar}}
-              <img class="officer-avatar" src="{{s.officerAvatar}}" alt="{{s.officerName}}" onerror="this.parentElement.classList.add('no-avatar')">
+              <img class="officer-avatar" src="{{s.officerAvatar}}" alt="{{s.officerName}}"
+                onerror="this.parentElement.classList.add('no-avatar')">
               {{/if}}
               <div class="officer-info">
                 <span class="officer-tag">派驻干员</span>
@@ -85,8 +93,9 @@
 
     <!-- 页脚 -->
     <footer class="footer">
-      <div class="footer-text">{{@copyright}}</div>
+      <div class="footer-text">astrbot</div>
     </footer>
   </div>
 </body>
+
 </html>

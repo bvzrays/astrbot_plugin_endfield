@@ -44,7 +44,8 @@ body {
   width: 100%;
   margin-bottom: 14px;
   padding: 12px 16px;
-  background: #f9fafb;
+  background-image: url('../../img/短尺背景.png');
+  background-size: 100% 100%;
   border-radius: 10px;
   position: relative;
   z-index: 2;
@@ -320,14 +321,65 @@ body {
 }
 
 .char-stat-value {
-  font-size: 0.95rem;
-  font-weight: bold;
-  color: #374151;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  /* Deep blue for all values now */
   font-variant-numeric: tabular-nums;
 }
 
 .char-stat-value.char-stat-fav {
-  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Trust Level Badges */
+.trust-badge {
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+
+.trust-友好 {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+.trust-亲近 {
+  background: #eff6ff;
+  color: #1e61cc;
+  border: 1px solid #dbeafe;
+}
+
+.trust-信任 {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #d1fae5;
+}
+
+.trust-深厚 {
+  background: #fdf2f8;
+  color: #db2777;
+  border: 1px solid #fce7f3;
+}
+
+.trust-崇拜 {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef3c7;
+}
+
+.char-stat-fav-val {
+  font-size: 0.95rem;
+}
+
+.char-stat-percent {
+  font-size: 1.15rem;
+  font-weight: 800;
 }
 
 /* ========== 空房间 ========== */
