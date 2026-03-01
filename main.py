@@ -10,7 +10,7 @@ from astrbot.core import AstrBotConfig
 from astrbot.core.message.components import Plain, Image, At
 
 from .core.client import EndfieldClient
-from .core.user import UserManager, SimulateManager, AnnouncementManager, MaaendManager
+from .core.user import UserManager, SimulateManager, AnnouncementManager, MaaendManager, SanityManager
 from .core.utils import get_message
 from .core.render import Renderer
 
@@ -88,13 +88,15 @@ def build_detail_render_data(item: dict) -> dict:
         "pageWidth": 720
     }
 
-@register("astrbot_plugin_endfield", "bvzrays & 熵增项目组", "终末地协议终端", "v1.5.0", "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield")
+@register("astrbot_plugin_endfield", "bvzrays & 熵增项目组", "终末地协议终端", "v1.6.0", "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield")
 class EndfieldPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
         self.config = config or {}
         self.api_key = config.get("api_key", "") if config else ""
         self.verify_ssl = config.get("verify_ssl", True) if config else True
+        self.auto_sign_in = config.get("auto_sign_in", True) if config else True
+        self.auto_sign_in_time = config.get("auto_sign_in_time", "00:05") if config else "00:05"
         self.client = EndfieldClient(self.api_key, verify_ssl=self.verify_ssl)
         
         # Use StarTools.get_data_dir() for persistence compliance
@@ -105,12 +107,45 @@ class EndfieldPlugin(Star):
         self.user_mgr = UserManager(data_dir)
         self.sim_mgr = SimulateManager(data_dir)
         self.announce_mgr = AnnouncementManager(data_dir)
+        self.sanity_mgr = SanityManager(data_dir)
         self.maa_mgr = MaaendManager(data_dir)
         
         res_path = os.path.join(os.path.dirname(__file__), "resources")
         self.renderer = Renderer(res_path, self)
         self._announcement_task_handle = None
+        self._sanity_task_handle = None
+        self._auto_sign_in_task_handle = None
         self._http_client = None
+        self.banner_cache = {}
+
+    async def get_activity_banner(self, act: dict) -> str:
+        name = act.get("name", "")
+        if name in self.banner_cache:
+            return self.banner_cache[name]
+            
+        pc_link = act.get("pc_link", "")
+        import re
+        match = re.search(r'gameEntryId=(\d+)', pc_link)
+        if match:
+            entry_id = match.group(1)
+            try:
+                res = await self.client._get(f"/api/wiki/items/{entry_id}")
+                if res and isinstance(res, dict) and "content" in res and "document_map" in res["content"]:
+                    for doc in res["content"]["document_map"].values():
+                        if "block_map" in doc:
+                            for block in doc["block_map"].values():
+                                if block.get("kind") == "image" and "image" in block:
+                                    img_url = block["image"].get("url", "")
+                                    if img_url:
+                                        self.banner_cache[name] = img_url
+                                        return img_url
+            except Exception as e:
+                logger.error(f"Failed to fetch wiki banner for {name}: {e}")
+                
+        # Fallback to pic
+        pic = act.get("pic", "")
+        self.banner_cache[name] = pic
+        return pic
 
     async def get_b64(self, rp):
         import mimetypes, base64, httpx, hashlib, asyncio
@@ -198,6 +233,10 @@ class EndfieldPlugin(Star):
     async def initialize(self):
         # Announcement Task
         self._announcement_task_handle = asyncio.create_task(self.announcement_task())
+        self._sanity_task_handle = asyncio.create_task(self.sanity_task())
+        # Auto Sign-in Task
+        if self.auto_sign_in:
+            self._auto_sign_in_task_handle = asyncio.create_task(self.auto_sign_in_task())
 
     @filter.command("zmd")
     async def zmd_help(self, event: AstrMessageEvent):
@@ -238,7 +277,10 @@ class EndfieldPlugin(Star):
                     "group": "其他功能",
                     "list": [
                         {"title": ":公告", "desc": "查看最新官方公告", "icon": True},
-                        {"title": ":wiki 干员 [名称]", "desc": "查询干员百科", "icon": True}
+                        {"title": ":wiki 干员 [名称]", "desc": "查询干员百科", "icon": True},
+                        {"title": ":订阅理智", "desc": "满理智提醒", "icon": True},
+                        {"title": ":取消订阅理智", "desc": "取消满理智提醒", "icon": True},
+                        {"title": ":日历", "desc": "查看最新活动日历图", "icon": True}
                     ]
                 }
             ],
@@ -792,7 +834,7 @@ class EndfieldPlugin(Star):
             token = b.get("framework_token")
             res = await self.client.get_attendance(token)
             if not res:
-                results.append(f"【{label}】签到失败或今日已签到。")
+                results.append(f"【{label}】签到失败或今日已签到（插件每日自动签到）。")
                 continue
                 
             if res.get("already_signed"):
@@ -1475,6 +1517,249 @@ class EndfieldPlugin(Star):
         await self.announce_mgr.remove_subscription(group_id)
         yield event.plain_result("已取消公告订阅。")
 
+    @filter.command("订阅理智")
+    async def subscribe_sanity(self, event: AstrMessageEvent):
+        '''订阅理智推送（满时提醒）'''
+        if not event.get_group_id():
+            yield event.plain_result("请在群聊中使用此命令，用于理智满时艾特您。")
+            return
+            
+        user_id = event.get_sender_id()
+        group_id = event.get_group_id()
+        binding = await self.user_mgr.get_primary_binding(user_id)
+        if not binding:
+            yield event.plain_result("请先绑定森空岛账号后再订阅理智提醒。")
+            return
+            
+        success = await self.sanity_mgr.add_subscription(user_id, group_id)
+        if success:
+            yield event.plain_result("已成功订阅理智满时提醒！")
+        else:
+            yield event.plain_result("您已经在该群聊中订阅过理智提醒。")
+
+    @filter.command("取消订阅理智")
+    async def unsubscribe_sanity(self, event: AstrMessageEvent):
+        '''取消理智推送'''
+        if not event.get_group_id():
+            yield event.plain_result("请在群聊中使用此命令。")
+            return
+            
+        user_id = event.get_sender_id()
+        group_id = event.get_group_id()
+        success = await self.sanity_mgr.remove_subscription(user_id, group_id)
+        if success:
+            yield event.plain_result("已取消理智订阅。")
+        else:
+            yield event.plain_result("您当前没有订阅过理智提醒。")
+
+    @filter.command("日历")
+    async def calendar_cmd(self, event: AstrMessageEvent):
+        '''活动日历图'''
+        res = await self.client.get_wiki_activities()
+        
+        # If res is None, the request failed (e.g., 401 Unauthorized or network error)
+        if res is None:
+            yield event.plain_result("获取活动列表失败，无法连接到终末地维基。请检查您的 API Key 是否已正确配置。")
+            return
+            
+        # Ensure res is a list
+        if not isinstance(res, list):
+            if hasattr(res, 'get'):
+                if "activities" in res:
+                    res = res.get("activities", [])
+                elif "data" in res:
+                    res = res.get("data", [])
+                elif "list" in res:
+                    res = res.get("list", [])
+                else:
+                    res = []
+            else:
+                res = []
+            
+        if not res:
+            yield event.plain_result("获取到了活动列表，但当前列表为空（服务器暂无活动信息）。")
+            return
+
+        # Build data for rendering
+        import datetime
+        now = datetime.datetime.now()
+        now_ts = int(now.timestamp())
+        
+        normal_acts = []
+        perm_acts = []
+        min_ts = float('inf')
+        
+        for act in res:
+            try:
+                st_ts = act.get("activity_start_at_ts") or act.get("start_at_ts")
+                et_ts = act.get("activity_end_at_ts") or act.get("end_at_ts")
+                
+                if not st_ts or not et_ts:
+                    continue
+                    
+                st_ts = int(st_ts)
+                et_ts = int(et_ts)
+                
+                duration_days = (et_ts - st_ts) / 86400
+                st = datetime.datetime.fromtimestamp(st_ts)
+                et = datetime.datetime.fromtimestamp(et_ts)
+                
+                is_active = (st_ts <= now_ts <= et_ts)
+                
+                desc = act.get("description", "活动")
+                is_perm = duration_days >= 300
+                if is_perm and desc in ["", "玩法说明", "新手活动"]:
+                    desc = "常驻活动"
+                
+                parsed_act = {
+                    "name": act.get("name", "未知活动"),
+                    "desc": desc,
+                    "start": st.strftime("%m.%d"),
+                    "end": et.strftime("%m.%d"),
+                    "st_ts": st_ts,
+                    "et_ts": et_ts,
+                    "is_active": is_active,
+                    "cover": act.get("pic", ""),
+                    "is_perm": is_perm
+                }
+                
+                dt_start = datetime.datetime.fromtimestamp(parsed_act["st_ts"])
+                dt_end = datetime.datetime.fromtimestamp(parsed_act["et_ts"])
+                
+                # Check permanent: duration >= 300 days (~1 year)
+                is_perm = False
+                if (parsed_act["et_ts"] - parsed_act["st_ts"]) >= 300 * 24 * 3600:
+                    is_perm = True
+                    
+                parsed_act["start"] = dt_start.strftime("%m.%d %H:%M")
+                parsed_act["end"] = dt_end.strftime("%m.%d %H:%M")
+                parsed_act["is_perm"] = is_perm
+                
+                # Fetches the long banner using Wiki API, or falls back to 'pic' sticker
+                parsed_act["cover"] = await self.get_activity_banner(act)
+                
+                if parsed_act["is_perm"]:
+                    perm_acts.append(parsed_act)
+                else:
+                    normal_acts.append(parsed_act)
+                    min_ts = min(min_ts, st_ts)
+                    
+            except Exception as e:
+                logger.error(f"Error parsing activity time: {e}")
+                
+        if not normal_acts and not perm_acts:
+            yield event.plain_result("暂无可解析的活动事件。")
+            return
+            
+        if min_ts == float('inf'):
+            if perm_acts:
+                min_ts = min(a['st_ts'] for a in perm_acts)
+            else:
+                min_ts = now_ts
+                
+        # Calendar span: limit to 20~60 days
+        max_normal_ts = max((a['et_ts'] for a in normal_acts), default=min_ts + 30 * 86400)
+        total_duration = max_normal_ts - min_ts
+        if total_duration < 20 * 86400:
+            total_duration = 20 * 86400
+        elif total_duration > 60 * 86400:
+            total_duration = 60 * 86400
+            
+        # Select key dates for axis
+        key_dates = set()
+        
+        # Combine acts: normal events first, permanent events at the back
+        normal_acts.sort(key=lambda x: x["st_ts"])
+        perm_acts.sort(key=lambda x: x["st_ts"])
+        all_acts = normal_acts + perm_acts
+        
+        for act in all_acts:
+            left_pct = (act["st_ts"] - min_ts) / total_duration * 100
+            right_pct = (act["et_ts"] - min_ts) / total_duration * 100
+            
+            if act["is_perm"]:
+                right_pct = 100
+                
+            left_pct = max(0, min(100, left_pct))
+            right_pct = max(0, min(100, right_pct))
+            
+            width_pct = right_pct - left_pct
+            
+            if width_pct < 15:
+                width_pct = 15
+                if left_pct + width_pct > 100:
+                    left_pct = 100 - width_pct
+                    
+            act["left_pct"] = left_pct
+            act["width_pct"] = width_pct
+            
+            if 0 <= left_pct <= 100 and not act["is_perm"]:
+                key_dates.add(act["st_ts"])
+                
+        # Pack into lanes
+        lanes = []
+        for act in normal_acts:
+            placed = False
+            for lane in lanes:
+                last_act = lane[-1]
+                # Assuming 0.5 days (43200s) padding minimum between events in the same lane
+                if act["st_ts"] >= last_act["et_ts"] + 43200:
+                    lane.append(act)
+                    placed = True
+                    break
+            if not placed:
+                lanes.append([act])
+                
+        # Permanent acts go to the bottom, they should not mix with normal_acts lanes
+        perm_lanes = []
+        for act in perm_acts:
+            placed = False
+            for lane in perm_lanes:
+                last_act = lane[-1]
+                if act["st_ts"] >= last_act["et_ts"] + 43200:
+                    lane.append(act)
+                    placed = True
+                    break
+            if not placed:
+                perm_lanes.append([act])
+                
+        # Append perm lanes to normal lanes so they render at the bottom
+        lanes.extend(perm_lanes)
+                
+        axis_dates = []
+        for ds in sorted(list(key_dates)):
+            dt = datetime.datetime.fromtimestamp(ds)
+            axis_dates.append({
+                "label": dt.strftime("%m.%d"),
+                "left_pct": (ds - min_ts) / total_duration * 100
+            })
+            
+        # Today's line
+        now_pct = (now_ts - min_ts) / total_duration * 100
+        now_line = None
+        if 0 <= now_pct <= 100:
+            now_line = {
+                "label": "TODAY",
+                "left_pct": now_pct
+            }
+        
+        render_data = {
+            "pluResPath": "file:///" + os.path.abspath(self.renderer.res_path).replace("\\", "/") + "/",
+            "title": "版本日历",
+            "lanes": lanes,
+            "axis_dates": axis_dates,
+            "now_line": now_line,
+            "copyright": "AstrBot & Endfield Plugin",
+            "pageWidth": 1200
+        }
+        
+        url = await self.renderer.render_html("calendar/calendar.html", render_data)
+        if url:
+            yield event.image_result(url)
+        else:
+            yield event.plain_result("活动日历渲染失败。")
+
+
     async def announcement_task(self):
         '''后台公告推送任务'''
         while True:
@@ -1512,6 +1797,118 @@ class EndfieldPlugin(Star):
                     except Exception as e:
                         logger.error(f"Failed to push announcement to {s['group_id']}: {e}")
                     await self.announce_mgr.update_since_ts(s["group_id"], ts)
+
+    async def sanity_task(self):
+        '''理智满值通知推送任务 (20分钟轮询)'''
+        while True:
+            await asyncio.sleep(20 * 60)
+            subs = await self.sanity_mgr.get_subscriptions()
+            if not subs:
+                continue
+
+            now_ts = int(time.time())
+            
+            for sub in subs:
+                user_id = sub.get("user_id")
+                group_id = sub.get("group_id")
+                last_notified = sub.get("last_notified", 0)
+
+                # Avoid notifying twice within 4 hours to prevent spam
+                if now_ts - last_notified < 3600 * 4:
+                    continue
+                
+                binding = await self.user_mgr.get_primary_binding(user_id)
+                if not binding:
+                    continue
+                    
+                token = binding.get("framework_token")
+                role_id = binding.get("role_id")
+                server_id = binding.get("server_id", 1)
+                
+                if not token or not role_id:
+                    continue
+                
+                try:
+                    stamina_data = await self.client.get_stamina(token, role_id, server_id)
+                    if not stamina_data:
+                        continue
+                        
+                    stamina_obj = stamina_data.get("stamina", {})
+                    s_current = int(stamina_obj.get("current", 0) or 0)
+                    s_max = int(stamina_obj.get("max", 0) or 0)
+                    
+                    if s_current > 0 and s_max > 0 and s_current >= s_max:
+                        try:
+                            msg = f"尊敬的干员管理员，您的理智已经达到上限（{s_current}/{s_max}），请及时清理。"
+                            await self.context.send_message(group_id, [At(qq=user_id), Plain("【理智已满】\n"), Plain(msg)])
+                            await self.sanity_mgr.update_last_notified(user_id, group_id, now_ts)
+                        except Exception as e:
+                            logger.error(f"Failed to push sanity notification: {e}")
+                except Exception as e:
+                    logger.error(f"Sanity task error for user {user_id}: {e}")
+                    
+                # Rate limit safety
+                await asyncio.sleep(1.5)
+
+    async def auto_sign_in_task(self):
+        '''每日自动签到任务'''
+        import datetime
+        while True:
+            try:
+                # Calculate time until next sign-in
+                now = datetime.datetime.now()
+                target_time_str = self.auto_sign_in_time if hasattr(self, 'auto_sign_in_time') else "00:05"
+                try:
+                    target_hour, target_minute = map(int, target_time_str.split(':'))
+                except ValueError:
+                    target_hour, target_minute = 0, 5 # Default to 00:05 if format is invalid
+                
+                target_time = now.replace(hour=target_hour, minute=target_minute, second=0, microsecond=0)
+                if now > target_time:
+                    # If target time for today has passed, schedule for tomorrow
+                    target_time += datetime.timedelta(days=1)
+                
+                wait_seconds = (target_time - now).total_seconds()
+                logger.info(f"[Endfield Auto Sign-In] Next auto sign-in scheduled at {target_time.strftime('%Y-%m-%d %H:%M:%S')} (in {wait_seconds:.1f} seconds)")
+                
+                # Sleep until target time
+                await asyncio.sleep(wait_seconds)
+                
+                # Wake up and sign in for all bound accounts
+                all_bindings = await self.user_mgr.get_all_bindings()
+                success_count = 0
+                fail_count = 0
+                
+                for bind in all_bindings:
+                    token = bind.get("framework_token")
+                    role_id = bind.get("role_id")
+                    if not token or not role_id:
+                        continue
+                        
+                    try:
+                        res = await self.client.get_attendance(token)
+                        if res and isinstance(res, dict):
+                            success_count += 1
+                            logger.info(f"[Endfield Auto Sign-In] Success for role {role_id}")
+                        else:
+                            fail_count += 1
+                            logger.warning(f"[Endfield Auto Sign-In] Failed format for role {role_id}: {res}")
+                    except Exception as e:
+                        fail_count += 1
+                        logger.error(f"[Endfield Auto Sign-In] Error for role {role_id}: {e}")
+                    
+                    # Small delay between requests to avoid rate limits
+                    await asyncio.sleep(1.5)
+                    
+                logger.info(f"[Endfield Auto Sign-In] Batch complete. Success: {success_count}, Failed/Skipped: {fail_count}")
+                
+            except asyncio.CancelledError:
+                logger.info("[Endfield Auto Sign-In] Task cancelled.")
+                break
+            except Exception as e:
+                logger.error(f"[Endfield Auto Sign-In] Unexpected error in task loop: {e}")
+                await asyncio.sleep(60) # Sleep before retry on error to prevent hot-loop
+
     @filter.command("帝江号建设", alias=["帝江号"])
     async def spaceship_cmd(self, event: AstrMessageEvent):
         '''查询帝江号建设信息'''
@@ -1670,6 +2067,10 @@ class EndfieldPlugin(Star):
     async def terminate(self):
         if self._announcement_task_handle:
             self._announcement_task_handle.cancel()
+        if self._sanity_task_handle:
+            self._sanity_task_handle.cancel()
+        if self._auto_sign_in_task_handle:
+            self._auto_sign_in_task_handle.cancel()
         if self._http_client:
             await self._http_client.aclose()
         if self.client:

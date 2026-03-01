@@ -30,5 +30,15 @@
     "description": "公告订阅推送轮询间隔（分钟）",
     "type": "int",
     "default": 10
+  },
+  "auto_sign_in": {
+    "description": "是否开启每日自动签到（每天自动执行）",
+    "type": "bool",
+    "default": true
+  },
+  "auto_sign_in_time": {
+    "description": "自动签到执行时间 (格式 HH:MM)",
+    "type": "string",
+    "default": "00:05"
   }
 }
