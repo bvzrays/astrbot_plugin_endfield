@@ -137,6 +137,49 @@ class AnnouncementManager(AsyncDataManager):
                     break
             await self._save()
 
+class SanityManager(AsyncDataManager):
+    def __init__(self, data_dir: str):
+        super().__init__(data_dir, "sanity_subscriptions.json", {"subscriptions": []})
+
+    async def add_subscription(self, user_id: str, group_id: str):
+        user_id = str(user_id)
+        group_id = str(group_id)
+        async with self.lock:
+            for sub in self.data["subscriptions"]:
+                if sub.get("user_id") == user_id and sub.get("group_id") == group_id:
+                    return False
+            self.data["subscriptions"].append({"user_id": user_id, "group_id": group_id, "last_notified": 0})
+            await self._save()
+            return True
+
+    async def remove_subscription(self, user_id: str, group_id: str):
+        user_id = str(user_id)
+        group_id = str(group_id)
+        async with self.lock:
+            initial_len = len(self.data["subscriptions"])
+            self.data["subscriptions"] = [
+                s for s in self.data["subscriptions"] 
+                if not (s.get("user_id") == user_id and s.get("group_id") == group_id)
+            ]
+            if len(self.data["subscriptions"]) < initial_len:
+                await self._save()
+                return True
+            return False
+
+    async def get_subscriptions(self) -> List[Dict]:
+        async with self.lock:
+            return copy.deepcopy(self.data.get("subscriptions", []))
+
+    async def update_last_notified(self, user_id: str, group_id: str, ts: int):
+        user_id = str(user_id)
+        group_id = str(group_id)
+        async with self.lock:
+            for sub in self.data["subscriptions"]:
+                if sub.get("user_id") == user_id and sub.get("group_id") == group_id:
+                    sub["last_notified"] = ts
+                    break
+            await self._save()
+
 class MaaendManager(AsyncDataManager):
     def __init__(self, data_dir: str):
         super().__init__(data_dir, "maaend.json", {"users": {}, "groups": {}})

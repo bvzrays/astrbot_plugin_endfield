@@ -269,8 +269,8 @@ class EndfieldClient:
         return await self._get(f"/api/wiki/items/{item_id}")
 
     async def get_wiki_activities(self) -> Optional[Dict]:
-        """GET /api/bili-wiki/activities"""
-        return await self._get("/api/bili-wiki/activities")
+        """GET /api/wiki/activities"""
+        return await self._get("/api/wiki/activities")
 
     # ─── Announcements (api_key only) ─────────────────────────────────
     async def get_announcements(self, page: int = 1, page_size: int = 20) -> Optional[Dict]:
