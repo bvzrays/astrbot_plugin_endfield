@@ -268,7 +268,7 @@ class EndfieldClient:
         """GET /api/wiki/items/:id"""
         return await self._get(f"/api/wiki/items/{item_id}")
 
-    async def get_wiki_activities(self) -> Optional[Dict]:
+    async def get_wiki_activities(self) -> Optional[Any]:
         """GET /api/wiki/activities"""
         return await self._get("/api/wiki/activities")
 
@@ -329,3 +329,19 @@ class EndfieldClient:
         except Exception as e:
             logger.error(f"[Endfield API] GET {url} -> Exception: {e}")
         return None
+    # ─── Panel Sync ───────────────────────────────────────────────────
+    async def sync_panel(self, framework_token: str) -> Optional[Dict]:
+        """POST /api/panel/sync"""
+        return await self._post("/api/panel/sync", framework_token=framework_token)
+
+    async def get_panel_sync_status(self, framework_token: str) -> Optional[Dict]:
+        """GET /api/panel/sync/status"""
+        return await self._get("/api/panel/sync/status", framework_token=framework_token)
+
+    async def get_panel_chars(self, framework_token: str) -> Optional[Dict]:
+        """GET /api/panel/chars"""
+        return await self._get("/api/panel/chars", framework_token=framework_token)
+
+    async def get_panel_char(self, framework_token: str, template_id: str) -> Optional[Dict]:
+        """GET /api/panel/char/:template_id"""
+        return await self._get(f"/api/panel/char/{template_id}", framework_token=framework_token)

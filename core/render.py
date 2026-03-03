@@ -1,15 +1,60 @@
 import os
+import re
+import asyncio
+import base64
+import mimetypes
+import jinja2
 from astrbot.api.star import Star
+from astrbot.api import logger
 from typing import Dict, Any, Optional
 
 class Renderer:
+    # Class-level Jinja2 environment for template caching / reuse
+    _jinja_env: Optional[jinja2.Environment] = None
+    _cache_cleanup_task: Optional[asyncio.Task] = None
+
+    @classmethod
+    def _get_jinja_env(cls) -> jinja2.Environment:
+        if cls._jinja_env is None:
+            cls._jinja_env = jinja2.Environment(
+                autoescape=True,
+                keep_trailing_newline=True,
+            )
+        return cls._jinja_env
+
     def __init__(self, res_path: str, plugin: Star):
-        import asyncio
         self.plugin = plugin
         self.res_path = res_path
         self._browser = None
         self._playwright = None
         self._lock = asyncio.Lock()
+        self._output_dir = os.path.abspath(os.path.join(self.res_path, "render_cache"))
+        os.makedirs(self._output_dir, exist_ok=True)
+        # Start background cache cleanup task if not already running
+        if Renderer._cache_cleanup_task is None or Renderer._cache_cleanup_task.done():
+            Renderer._cache_cleanup_task = asyncio.create_task(self._cache_cleanup_loop())
+
+    async def _cache_cleanup_loop(self):
+        """Background task: clean render cache files older than 5 minutes every 60s."""
+        while True:
+            try:
+                await asyncio.sleep(60)
+                cutoff = asyncio.get_event_loop().time() - 300
+                import time as _time
+                now = _time.time()
+                for f in os.listdir(self._output_dir):
+                    if not f.startswith("render_"):
+                        continue
+                    fp = os.path.join(self._output_dir, f)
+                    try:
+                        if now - os.path.getmtime(fp) > 300:
+                            os.remove(fp)
+                    except Exception as e:
+                        logger.debug(f"[Endfield Render] Cache cleanup failed for {f}: {e}")
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.debug(f"[Endfield Render] Cache cleanup loop error: {e}")
 
     def get_res_path(self, sub_path: str) -> str:
         """Returns the absolute file URL for a resource sub-path."""
@@ -38,7 +83,6 @@ class Renderer:
 
     def _adapt_template(self, content: str) -> str:
         """Converts Yunzai (art-template) syntax to Jinja2."""
-        import re
         # Handle $index before $value to avoid partial replacements
         adapted = content.replace("$index+1", "loop.index").replace("$index", "loop.index0")
         adapted = adapted.replace("$value", "item")
@@ -69,8 +113,6 @@ class Renderer:
 
     def _inline_assets(self, html: str) -> str:
         """Inlines CSS and Images to ensure Playwright renders them correctly."""
-        import re, base64, mimetypes
-        
         def inline_css(match):
             path = os.path.join(self.res_path, match.group(1))
             if os.path.exists(path):
@@ -93,11 +135,10 @@ class Renderer:
         html = re.sub(r'<link\s+rel="stylesheet"\s+href="\{\{(?:_res_path|pluResPath)\}\}([^"]+\.css)">', inline_css, html)
         html = re.sub(r'src="\{\{(?:_res_path|pluResPath)\}\}([^"]+\.(?:png|jpg|jpeg|gif|svg|webp))"', inline_image, html)
         html = re.sub(r'url\(\s*[\'"]?\{\{(?:_res_path|pluResPath)\}\}([^)"\']+?)[\'"]?\s*\)', inline_image, html)
-        # Also handle inline style="...url({{pluResPath}}...)" in HTML element attributes
+        # Also handle inline style="...url({{pluResPath}}...)..." in HTML element attributes
         def inline_style_bg(m):
             path = os.path.join(self.res_path, m.group(1))
             if os.path.exists(path):
-                import mimetypes, base64
                 mime = mimetypes.guess_type(path)[0] or "image/png"
                 with open(path, "rb") as f:
                     b64 = base64.b64encode(f.read()).decode("utf-8")
@@ -107,34 +148,22 @@ class Renderer:
         return html
 
     def _render_jinja(self, template_str: str, data: Dict[str, Any]) -> Optional[str]:
-        """Renders the adapted template with data using Jinja2."""
-        import jinja2
+        """Renders the adapted template with data using the shared Jinja2 Environment."""
         try:
-            env = jinja2.Environment(autoescape=True)
+            env = self._get_jinja_env()
             data_copy = data.copy()
             data_copy["_res_path"] = data_copy.get("pluResPath", "X")
             return env.from_string(template_str).render(**data_copy)
         except Exception as e:
-            from astrbot.api import logger
             logger.error(f"[Endfield Render] Jinja2 error: {e}")
             return None
 
     async def _screenshot(self, html: str, name: str, options: Optional[Dict]) -> Optional[str]:
         """Uses Playwright to capture a screenshot of the rendered HTML."""
         from playwright.async_api import async_playwright
-        import uuid, time
-        
-        output_dir = os.path.abspath(os.path.join(self.res_path, "render_cache"))
-        os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, f"render_{uuid.uuid4().hex[:8]}.png")
-        
-        for f in os.listdir(output_dir):
-            if f.startswith("render_") and time.time() - os.path.getmtime(os.path.join(output_dir, f)) > 300:
-                try: 
-                    os.remove(os.path.join(output_dir, f))
-                except Exception as e: 
-                    from astrbot.api import logger
-                    logger.debug(f"[Endfield Render] Failed to clean cache file {f}: {e}")
+        import uuid
+
+        output_path = os.path.join(self._output_dir, f"render_{uuid.uuid4().hex[:8]}.png")
 
         try:
             async with self._lock:
@@ -147,7 +176,8 @@ class Renderer:
             page = await context.new_page()
             
             temp_html = os.path.join(os.path.dirname(os.path.abspath(os.path.join(self.res_path, name))), f"tmp_{uuid.uuid4().hex[:8]}.html")
-            with open(temp_html, "w", encoding="utf-8") as f: f.write(html)
+            with open(temp_html, "w", encoding="utf-8") as f:
+                f.write(html)
             
             try:
                 await page.goto(f"file:///{temp_html.replace(chr(92), '/')}", wait_until="load", timeout=15000)
@@ -167,11 +197,13 @@ class Renderer:
                 
             return output_path
         except Exception as e:
-            from astrbot.api import logger
             logger.error(f"[Endfield Render] Playwright error: {e}")
             return None
             
     async def close(self):
+        if Renderer._cache_cleanup_task and not Renderer._cache_cleanup_task.done():
+            Renderer._cache_cleanup_task.cancel()
+            Renderer._cache_cleanup_task = None
         if self._browser:
             await self._browser.close()
         if self._playwright:

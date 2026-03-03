@@ -33,6 +33,10 @@ class AsyncDataManager:
         except Exception as e:
             logger.error(f"Failed to save {self.path}: {e}")
 
+    async def get_all_data(self) -> Any:
+        async with self.lock:
+            return copy.deepcopy(self.data)
+
 class UserManager(AsyncDataManager):
     def __init__(self, data_dir: str):
         super().__init__(data_dir, "bindings.json", {})
@@ -53,7 +57,7 @@ class UserManager(AsyncDataManager):
     async def save_user_bindings(self, user_id: Any, bindings: List[Dict]):
         user_id = str(user_id)
         async with self.lock:
-            # Normalize and clean bindings
+            # 规范化并清理绑定信息
             cleaned = []
             seen_role_ids = set()
             
@@ -87,6 +91,16 @@ class UserManager(AsyncDataManager):
             await self.save_user_bindings(user_id, updated)
             return True
         return False
+
+    async def get_all_bindings(self) -> List[Dict]:
+        async with self.lock:
+            all_b = []
+            for user_id, bindings in self.data.items():
+                for b in bindings:
+                    b_copy = copy.deepcopy(b)
+                    b_copy["_user_id"] = user_id
+                    all_b.append(b_copy)
+            return all_b
 
 class SimulateManager(AsyncDataManager):
     def __init__(self, data_dir: str):
@@ -143,7 +157,7 @@ class SanityManager(AsyncDataManager):
         super().__init__(data_dir, "sanity_subscriptions.json", {"subscriptions": []})
 
     async def add_subscription(self, user_id: str, msg_origin: str):
-        """Add or overwrite the subscription for a user (one per user, latest session wins)."""
+        """为用户添加或覆盖订阅（每个用户一个，以最新会话为准）。"""
         user_id = str(user_id)
         async with self.lock:
             for sub in self.data["subscriptions"]:
@@ -213,3 +227,16 @@ class MaaendManager(AsyncDataManager):
             if user_id in self.data["users"] and device_id in self.data["users"][user_id]["devices"]:
                 self.data["users"][user_id]["default_device"] = device_id
                 await self._save()
+
+class SignManager(AsyncDataManager):
+    def __init__(self, data_dir: str):
+        super().__init__(data_dir, "sign_state.json", {"last_sign_date": ""})
+
+    async def get_last_sign_date(self) -> str:
+        async with self.lock:
+            return self.data.get("last_sign_date", "")
+
+    async def set_last_sign_date(self, date_str: str):
+        async with self.lock:
+            self.data["last_sign_date"] = date_str
+            await self._save()
