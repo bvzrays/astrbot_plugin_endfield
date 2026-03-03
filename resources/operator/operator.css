@@ -279,6 +279,61 @@ body {
   filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
 }
 
+/* ── ①-B 属性区 ── */
+.attributes-card {
+  padding: 14px 20px;
+}
+
+.attr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 15px;
+}
+
+.attr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.attr-item.main-stat {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.attr-label {
+  font-size: 13px;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+.attr-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.main-stat .attr-value {
+  color: #c2410c;
+  font-size: 17px;
+}
+
+.attr-sync-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #a16207;
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-left: auto;
+  letter-spacing: 0;
+}
+
 /* ── ② 技能区 ── */
 .skills-card {
   padding-bottom: 14px;
