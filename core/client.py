@@ -49,7 +49,16 @@ class EndfieldClient:
                 logger.warning(f"[Endfield API] {method} {path} -> code={data.get('code')}, msg={data.get('message', data.get('msg', ''))}")
                 return None
         except httpx.HTTPStatusError as e:
-            logger.error(f"[Endfield API] {method} {path} -> HTTPError {e.response.status_code}")
+            err_msg = e.response.text
+            try:
+                err_data = e.response.json()
+                if isinstance(err_data, dict):
+                    err_hint = err_data.get("message") or err_data.get("msg") or err_msg
+                else:
+                    err_hint = err_msg
+            except:
+                err_hint = err_msg
+            logger.error(f"[Endfield API] {method} {path} -> HTTPError {e.response.status_code}: {err_hint}")
             return None
         except httpx.RequestError as e:
             logger.error(f"[Endfield API] {method} {path} -> Request Error {e}")
@@ -109,15 +118,17 @@ class EndfieldClient:
         return await self._get(f"/api/v1/authorization/requests/{request_id}/status")
 
     # ─── Bindings ─────────────────────────────────────────────────────
-    async def create_binding(self, framework_token: str, user_id: str, is_primary: bool = True) -> Optional[Dict]:
+    async def create_binding(self, framework_token: str, user_id: str, is_primary: bool = True, **kwargs) -> Optional[Dict]:
         """POST /api/v1/bindings"""
-        return await self._post("/api/v1/bindings", body={
+        body = {
             "framework_token": framework_token,
-            "user_identifier": user_id,
+            "user_identifier": str(user_id),
             "client_type": "bot",
             "client_id": f"bot-{user_id}",
             "is_primary": is_primary
-        })
+        }
+        body.update(kwargs)
+        return await self._post("/api/v1/bindings", body=body)
 
     async def get_bindings(self, user_id: str) -> List[Dict]:
         """GET /api/v1/bindings"""

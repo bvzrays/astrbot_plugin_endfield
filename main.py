@@ -98,7 +98,7 @@ def build_detail_render_data(item: dict) -> dict:
         "pageWidth": 720
     }
 
-@register("astrbot_plugin_endfield", "bvzrays & 熵增项目组", "终末地协议终端", "v1.8.0", "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield")
+@register("astrbot_plugin_endfield", "bvzrays & 熵增项目组", "终末地协议终端", "v2.0.0", "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield")
 class EndfieldPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
@@ -407,6 +407,37 @@ class EndfieldPlugin(Star):
         async for res in self.bind_list(event):
             yield res
 
+    async def _send_and_get_msg_id(self, event: AstrMessageEvent, obmsg: list):
+        """通过协议端直接发送消息并返回 (client, message_id)"""
+        try:
+            if event.get_platform_name() == "aiocqhttp":
+                from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import AiocqhttpMessageEvent
+                if isinstance(event, AiocqhttpMessageEvent):
+                    client = event.bot
+                    group_id = event.get_group_id()
+                    if group_id:
+                        send_result = await client.send_group_msg(group_id=int(group_id), message=obmsg)
+                    else:
+                        send_result = await client.send_private_msg(user_id=int(event.get_sender_id()), message=obmsg)
+                    if send_result:
+                        msg_id = int(send_result.get("message_id"))
+                        logger.info(f"[消息追踪] 消息已发送，message_id={msg_id}")
+                        return client, msg_id
+        except Exception as e:
+            logger.warning(f"[消息追踪] 协议端发送失败: {e}")
+        return None, None
+
+    def _schedule_recall(self, client, message_id: int, delay: float):
+        """使用 asyncio.create_task 调度延迟撤回（和 recall 插件完全一样的模式）"""
+        async def _do_recall():
+            await asyncio.sleep(delay)
+            try:
+                await client.delete_msg(message_id=message_id)
+                logger.info(f"[撤回] 已撤回消息 {message_id}")
+            except Exception as e:
+                logger.warning(f"[撤回] 撤回消息失败: {e}")
+        return asyncio.create_task(_do_recall())
+
     @filter.command("授权登陆")
     async def auth_login(self, event: AstrMessageEvent):
         '''网页授权登录'''
@@ -429,15 +460,24 @@ class EndfieldPlugin(Star):
         request_id = auth_req["request_id"]
         auth_url = auth_req["auth_url"]
         
-        # Format response message
-        msg = f"{get_message('enduid.auth_link_intro')}\n{auth_url}\n\n{get_message('enduid.auth_link_wait')}"
-        yield event.plain_result(msg)
+        # 发送授权链接并获取 message_id
+        link_msg = f"{get_message('enduid.auth_link_intro')}\n{auth_url}\n\n{get_message('enduid.auth_link_wait')}"
+        client, link_message_id = await self._send_and_get_msg_id(event, [
+            {"type": "text", "data": {"text": link_msg}}
+        ])
+        if link_message_id is None:
+            yield event.plain_result(link_msg)
+        
+        # 调度 100 秒后自动撤回（兜底，确保在 QQ 2 分钟撤回窗口内）
+        recall_task = None
+        if client and link_message_id:
+            recall_task = self._schedule_recall(client, link_message_id, 100)
 
-        # Polling for status
-        max_attempts = 60
+        # 轮询授权状态，基于时间确保不超时
+        start_time = time.time()
         auth_data = None
-        for _ in range(max_attempts):
-            await asyncio.sleep(3)
+        while time.time() - start_time < 95:
+            await asyncio.sleep(2)
             status = await self.client.get_authorization_request_status(request_id)
             if not status:
                 continue
@@ -446,21 +486,57 @@ class EndfieldPlugin(Star):
             if state in ["used", "approved"]:
                 if status.get("framework_token"):
                     auth_data = status
+                    # 认证成功，取消定时撤回，立即撤回
+                    if recall_task and not recall_task.done():
+                        recall_task.cancel()
+                    if client and link_message_id:
+                        try:
+                            await client.delete_msg(message_id=link_message_id)
+                            logger.info(f"[撤回] 认证成功，已撤回链接消息 {link_message_id}")
+                        except Exception as e:
+                            logger.warning(f"[撤回] 认证成功后撤回失败: {e}")
                     break
             elif state == "rejected":
+                if recall_task and not recall_task.done():
+                    recall_task.cancel()
+                if client and link_message_id:
+                    try: await client.delete_msg(message_id=link_message_id)
+                    except: pass
                 yield event.plain_result(get_message("enduid.auth_rejected"))
                 return
             elif state == "expired":
+                if recall_task and not recall_task.done():
+                    recall_task.cancel()
+                if client and link_message_id:
+                    try: await client.delete_msg(message_id=link_message_id)
+                    except: pass
                 yield event.plain_result(get_message("enduid.auth_expired"))
                 return
 
         if not auth_data or not auth_data.get("framework_token"):
-            yield event.plain_result(get_message("enduid.auth_timeout"))
+            # 超时，撤回由 recall_task 兜底处理
+            yield event.plain_result("授权超时，请重新发起授权。")
             return
 
         # Create binding in unified backend
         token = auth_data["framework_token"]
-        binding_res = await self.client.create_binding(token, user_id)
+        
+        # 尝试提取角色信息以提高绑定成功率
+        role_kwargs = {}
+        roles = auth_data.get("available_roles", [])
+        if roles:
+            # 优先取默认角色，否则取第一个
+            role = next((r for r in roles if r.get("is_default")), roles[0])
+            role_kwargs = {
+                "role_id": role.get("role_id"),
+                "server_id": role.get("server_id"),
+                "nickname": role.get("nickname"),
+                "skland_uid": role.get("skland_uid"),
+                "channel_name": role.get("channel_name"),
+                "level": role.get("level")
+            }
+        
+        binding_res = await self.client.create_binding(token, user_id, **role_kwargs)
         
         if not binding_res:
             yield event.plain_result("创建绑定失败。")
@@ -476,7 +552,7 @@ class EndfieldPlugin(Star):
             "is_active": True,
             "is_primary": True,
             "login_type": "auth",
-            "bind_time": int(time.time() * 1000), # Simple TS
+            "bind_time": int(time.time() * 1000),
             "last_sync": int(time.time() * 1000)
         }
         
@@ -501,27 +577,35 @@ class EndfieldPlugin(Star):
             return
             
         token = qr_data["framework_token"]
-        qr_b64 = qr_data["qrcode"] # data:image/png;base64,...
-        
-        # In AstrBot, we can send a base64 image or a temp file.
-        # We'll use a temp file for compatibility.
+        qr_b64 = qr_data["qrcode"]  # data:image/png;base64,...
         
         img_data = base64.b64decode(qr_b64.split(",")[-1])
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             tmp.write(img_data)
             tmp_path = tmp.name
-            
-        yield event.chain_result([
-            Image.fromFileSystem(tmp_path),
-            Plain("请使用森空岛 APP 扫描二维码进行登录。\n二维码有效时间约 3 分钟。")
-        ])
         
-        # Polling
-        max_attempts = 90
+        # 发送二维码并获取 message_id
+        client, qr_message_id = await self._send_and_get_msg_id(event, [
+            {"type": "image", "data": {"file": "base64://" + qr_b64.split(",")[-1]}},
+            {"type": "text", "data": {"text": "请使用森空岛 APP 扫描二维码进行登录。\n二维码有效时间约 1 分 40 秒。"}}
+        ])
+        if qr_message_id is None:
+            yield event.chain_result([
+                Image.fromFileSystem(tmp_path),
+                Plain("请使用森空岛 APP 扫描二维码进行登录。\n二维码有效时间约 1 分 40 秒。")
+            ])
+        
+        # 调度 100 秒后自动撤回（兜底）
+        recall_task = None
+        if client and qr_message_id:
+            recall_task = self._schedule_recall(client, qr_message_id, 100)
+        
+        # 轮询扫码状态，基于时间
+        start_time = time.time()
         login_data = None
         
         try:
-            for _ in range(max_attempts):
+            while time.time() - start_time < 95:
                 await asyncio.sleep(2)
                 status = await self.client.get_qr_status(token)
                 if not status: continue
@@ -529,13 +613,28 @@ class EndfieldPlugin(Star):
                 if status.get("status") == "done":
                     login_data = await self.client.confirm_qr_login(token, user_id)
                     if login_data and login_data.get("framework_token"):
+                        # 扫码成功，取消定时撤回，立即撤回
+                        if recall_task and not recall_task.done():
+                            recall_task.cancel()
+                        if client and qr_message_id:
+                            try:
+                                await client.delete_msg(message_id=qr_message_id)
+                                logger.info(f"[撤回] 扫码成功，已撤回二维码 {qr_message_id}")
+                            except Exception as e:
+                                logger.warning(f"[撤回] 扫码成功后撤回失败: {e}")
                         break
                 elif status.get("status") in ["expired", "failed"]:
-                    yield event.plain_result("二维码已过期或登录失败。")
+                    if recall_task and not recall_task.done():
+                        recall_task.cancel()
+                    if client and qr_message_id:
+                        try: await client.delete_msg(message_id=qr_message_id)
+                        except: pass
+                    yield event.plain_result("二维码已过期或登录失败，请重新发起。")
                     return
             
             if not login_data:
-                yield event.plain_result("登录超时。")
+                # 超时，撤回由 recall_task 兜底处理
+                yield event.plain_result("扫码超时，请重新发起绑定。")
                 return
         finally:
             if os.path.exists(tmp_path):
@@ -543,12 +642,28 @@ class EndfieldPlugin(Star):
             
         # Create binding
         auth_token = login_data["framework_token"]
-        binding_res = await self.client.create_binding(auth_token, user_id)
+        
+        # 尝试提取角色信息以提高绑定成功率
+        role_kwargs = {}
+        roles = login_data.get("available_roles", [])
+        if roles:
+            # 优先取默认角色，否则取第一个
+            role = next((r for r in roles if r.get("is_default")), roles[0])
+            role_kwargs = {
+                "role_id": role.get("role_id"),
+                "server_id": role.get("server_id"),
+                "nickname": role.get("nickname"),
+                "skland_uid": role.get("skland_uid"),
+                "channel_name": role.get("channel_name"),
+                "level": role.get("level")
+            }
+            
+        binding_res = await self.client.create_binding(auth_token, user_id, **role_kwargs)
         if not binding_res:
             yield event.plain_result("创建绑定失败。")
             return
             
-        # Save (simplified logic, same as auth_login)
+        # Save
         acc = {
             "framework_token": auth_token,
             "binding_id": binding_res.get("id"),
@@ -1181,7 +1296,7 @@ class EndfieldPlugin(Star):
             
         # Poll sync status
         import asyncio
-        for _ in range(20):
+        for _ in range(60):
             await asyncio.sleep(2)
             status_res = await self.client.get_gacha_sync_status(token)
             if not status_res: continue
@@ -1218,19 +1333,33 @@ class EndfieldPlugin(Star):
         stats = stats_data.get("stats", {})
         analysis_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         
+        # Get user avatar from note API
+        user_avatar = ""
+        user_nickname = binding.get('nickname') or "未知"
+        try:
+            note_data = await self.client.get_note(token, binding.get("role_id"), binding.get("server_id", 1))
+            if note_data and "base" in note_data:
+                user_avatar = note_data["base"].get("avatarUrl", "")
+                user_nickname = note_data["base"].get("name", user_nickname)
+        except Exception as e:
+            logger.warning(f"Failed to get user avatar from note: {e}")
+        
         # Prepare icons
         icon_map = await self._prepare_gacha_icons(token, binding)
-        target_avatar = binding.get("avatarUrl", "")
+        
+        # Get current UP info from wiki activities
+        up_info = await self._get_current_up_info()
         
         render_data = {
             "title": "抽卡分析", "subtitle": "个人数据",
             "totalCount": stats.get("total_count", 0),
             "star6": stats.get("star6_count", 0), "star5": stats.get("star5_count", 0), "star4": stats.get("star4_count", 0),
-            "userNickname": binding.get('nickname') or "未知", "userUid": binding.get("role_id", ""),
-            "userAvatar": await self.get_b64(target_avatar) if target_avatar else "",
+            "userNickname": user_nickname, "userUid": binding.get("role_id", ""),
+            "userAvatar": await self.get_b64(user_avatar) if user_avatar else "",
             "analysisTime": analysis_time, "syncHint": "若需刷新，发送 :抽卡分析同步",
             "pluResPath": "file:///" + os.path.abspath(self.renderer.res_path).replace("\\", "/") + "/",
-            "poolGroups": [], "copyright": "Endfield Plugin | AstrBot"
+            "poolGroups": [], "copyright": "Endfield Plugin | AstrBot",
+            "upInfo": up_info
         }
         
         char_pools, weapon_pools = [], []
@@ -1251,7 +1380,7 @@ class EndfieldPlugin(Star):
                 pools_dict[pname].append(r)
                 
             for pool_name, pool_records in pools_dict.items():
-                entry = await self._prepare_gacha_pool_entry(pool_name, pool_records, key, icon_map)
+                entry = await self._prepare_gacha_pool_entry(pool_name, pool_records, key, icon_map, up_info)
                 if key == "weapon": weapon_pools.append(entry)
                 else: char_pools.append(entry)
                     
@@ -1266,8 +1395,123 @@ class EndfieldPlugin(Star):
             logger.error(f"Gacha analysis render failed: {e}")
             yield event.plain_result(f"【抽卡分析】总抽数：{render_data['totalCount']}（渲染异常）")
 
-    async def _prepare_gacha_pool_entry(self, pool_name: str, records: list, pool_key: str, icon_map: dict) -> dict:
+    async def _get_current_up_info(self) -> dict:
+        """Get current UP character/weapon info from wiki activities and global stats."""
+        up_info = {
+            "char_up_names": [],
+            "weapon_up_name": "",
+            "active_char_pool_name": "",
+            "active_weapon_pool_name": "",
+            "pool_up_map": {}  # pool_name -> up_name
+        }
+        
+        # Try to get from wiki activities
+        try:
+            activities = await self.client.get_wiki_activities()
+            if activities and isinstance(activities, list):
+                # Find active limited character banner
+                char_activity = next((a for a in activities if a.get("type") == "特许寻访" and a.get("is_active")), None)
+                if char_activity:
+                    up_str = str(char_activity.get("up", "")).strip()
+                    if up_str:
+                        up_info["char_up_names"] = [up_str]
+                    # Extract pool name from activity name (e.g., "特许寻访·热烈色彩")
+                    name = char_activity.get("name", "")
+                    if "·" in name:
+                        up_info["active_char_pool_name"] = name.split("·", 1)[1].strip()
+                
+                # Find active weapon banner
+                weapon_activity = next((a for a in activities if a.get("type") == "武库申领" and a.get("is_active")), None)
+                if weapon_activity:
+                    up_str = str(weapon_activity.get("up", "")).strip()
+                    if up_str:
+                        up_info["weapon_up_name"] = up_str
+                        up_info["active_weapon_pool_name"] = up_str
+                    name = weapon_activity.get("name", "")
+                    if "·" in name:
+                        up_info["active_weapon_pool_name"] = name.split("·", 1)[1].strip()
+                
+                # Build pool_up_map for all activities (including historical)
+                for act in activities:
+                    name = act.get("name", "")
+                    up_str = str(act.get("up", "")).strip()
+                    if name and up_str and "·" in name:
+                        pool_name = name.split("·", 1)[1].strip()
+                        up_info["pool_up_map"][pool_name] = up_str
+        except Exception as e:
+            logger.warning(f"Failed to get UP info from wiki activities: {e}")
+        
+        # Fallback to global stats
+        if not up_info["char_up_names"]:
+            try:
+                global_stats = await self.client.get_gacha_global_stats()
+                if global_stats and "stats" in global_stats:
+                    stats = global_stats["stats"]
+                    current_pool = stats.get("current_pool", {})
+                    if current_pool:
+                        up_chars = current_pool.get("up_char_names", [])
+                        if up_chars:
+                            up_info["char_up_names"] = up_chars
+                        else:
+                            up_char = str(current_pool.get("up_char_name", "")).strip()
+                            if up_char:
+                                up_info["char_up_names"] = [up_char]
+                        up_weapon = str(current_pool.get("up_weapon_name", "")).strip()
+                        if up_weapon:
+                            up_info["weapon_up_name"] = up_weapon
+                            up_info["active_weapon_pool_name"] = up_weapon
+                            
+                    for p in stats.get("pool_periods", []):
+                        p_name = str(p.get("pool_name", "")).strip()
+                        p_ups = p.get("up_char_names", [])
+                        if p_name and p_ups:
+                            up_info["pool_up_map"][p_name] = p_ups[0]
+                    for p in stats.get("weapon_pool_periods", []):
+                        p_name = str(p.get("pool_name", "")).strip()
+                        p_ups = p.get("up_weapon_names", [])
+                        if p_name and p_ups:
+                            up_info["pool_up_map"][p_name] = p_ups[0]
+            except Exception as e:
+                logger.warning(f"Failed to get UP info from global stats: {e}")
+        
+        return up_info
+
+    def _is_up_item(self, name: str, pool_key: str, pool_name: str, up_info: dict) -> bool:
+        """Check if a 6-star item is UP based on pool type and UP info."""
+        name = str(name).strip()
+        if not name:
+            return False
+        
+        # Check pool-specific UP map first (for historical pools)
+        pool_up = None
+        for p_name, u_name in up_info.get("pool_up_map", {}).items():
+            if pool_name == p_name or p_name in pool_name or pool_name in p_name:
+                pool_up = u_name
+                break
+                
+        if pool_up:
+            return name == pool_up or name in pool_up or pool_up in name
+        
+        # For limited character pool, check against current UP characters
+        if pool_key == "limited":
+            up_chars = up_info.get("char_up_names", [])
+            for up_char in up_chars:
+                if name == up_char or name in up_char or up_char in name:
+                    return True
+        
+        # For weapon pool, check against current UP weapon
+        if pool_key == "weapon":
+            up_weapon = up_info.get("weapon_up_name", "")
+            if up_weapon and (name == up_weapon or name in up_weapon or up_weapon in name):
+                return True
+        
+        return False
+
+    async def _prepare_gacha_pool_entry(self, pool_name: str, records: list, pool_key: str, icon_map: dict, up_info: dict = None) -> dict:
         """Helper to process records of a specific pool into a render entry."""
+        if up_info is None:
+            up_info = {}
+        
         # Split normal and free records
         normal = [r for r in records if not r.get("is_free")]
         free = [r for r in records if r.get("is_free")]
@@ -1280,16 +1524,37 @@ class EndfieldPlugin(Star):
         star6_count = 0
         max_pity = 40 if pool_key == "weapon" else 80
         
+        # Determine if this is a limited pool with UP
+        is_limited_pool = pool_key == "limited" or (pool_name in up_info.get("pool_up_map", {}))
+        # Standard and beginner pools don't have UP/wai tags
+        no_wai_tag = pool_key in ["standard", "beginner"]
+        
         # Pity calculation
         for r in normal:
             pity_count += 1
             if int(r.get("rarity", 0)) == 6:
                 star6_count += 1
                 name = str(r.get("char_name") or r.get("item_name", "")).strip()
+                
+                # Determine tag and badge color
+                if no_wai_tag:
+                    # Standard/beginner pools: no UP/wai concept
+                    tag = ""
+                    badge_color = "normal"
+                else:
+                    # Check if this is UP
+                    is_up = self._is_up_item(name, pool_key, pool_name, up_info)
+                    if is_up:
+                        tag = "UP"
+                        badge_color = "up"
+                    else:
+                        tag = "歪"
+                        badge_color = "wai"
+                
                 images.append({
                     "name": name, "pullCount": pity_count,
-                    "tag": "UP" if "UP" in str(r.get("item_name", "")) else "歪",
-                    "badgeColor": "up" if "UP" in str(r.get("item_name", "")) else "normal",
+                    "tag": tag,
+                    "badgeColor": badge_color,
                     "barPercent": min(100, int((pity_count / max_pity) * 100)),
                     "barColorLevel": "green" if pity_count < (max_pity*0.6) else "yellow" if pity_count < (max_pity*0.9) else "red",
                     "url": await self.get_b64(icon_map.get(name, "")),
@@ -2326,6 +2591,325 @@ class EndfieldPlugin(Star):
                 else:
                     pity[ptype] += 1
         return pity
+
+    @filter.command("全服统计")
+    async def global_gacha_stats(self, event: AstrMessageEvent):
+        '''全服抽卡统计'''
+        # Check for optional character name argument
+        msg = event.message_str.strip()
+        char_name = ""
+        if "全服统计" in msg:
+            parts = msg.split("全服统计", 1)
+            if len(parts) > 1 and parts[1].strip():
+                char_name = parts[1].strip()
+        
+        # Fetch global stats
+        pool_period = char_name if char_name else ""
+        data = await self.client.get_gacha_global_stats(pool_period)
+        
+        if not data or "stats" not in data:
+            yield event.plain_result("获取全服统计失败。")
+            return
+        
+        # Check if we need to switch to a specific period
+        if char_name and data.get("stats", {}).get("pool_periods"):
+            periods = data["stats"]["pool_periods"]
+            found = None
+            for p in periods:
+                names = p.get("up_char_names", [])
+                pool_name = (p.get("pool_name", "")).strip()
+                if any(char_name in (n or "") or (n or "") in char_name for n in names) or \
+                   char_name in pool_name or pool_name in char_name:
+                    found = p
+                    break
+            if not found:
+                yield event.plain_result(f"未找到包含 {char_name} 的期数。")
+                return
+            # Refetch with specific pool name
+            data = await self.client.get_gacha_global_stats(found.get("pool_name", ""))
+            if not data or "stats" not in data:
+                yield event.plain_result("获取指定期数统计失败。")
+                return
+        
+        s = data.get("stats", {})
+        
+        # Prepare render data
+        total_pulls = s.get("total_pulls", 0)
+        total_users = s.get("total_users", 0)
+        star6 = s.get("star6_total", 0)
+        star5 = s.get("star5_total", 0)
+        star4 = s.get("star4_total", 0)
+        avg_pity = f"{s.get('avg_pity', 0):.2f}" if s.get("avg_pity") is not None else "-"
+        
+        # Current UP info
+        pool = s.get("current_pool", {})
+        up_name = (pool.get("up_char_name") or 
+                   (pool.get("up_char_names") and pool["up_char_names"][0]) or 
+                   "-")
+        up_char_names = (pool.get("up_char_names", []) if pool.get("up_char_names") else [up_name] if up_name != "-" else [])
+        up_weapon_name = (pool.get("up_weapon_name") or "").strip()
+        
+        # Period label
+        period_label = "当期 UP"
+        if char_name:
+            period_label = pool.get("pool_name", char_name)
+        
+        # Channel stats
+        by_channel = s.get("by_channel", {})
+        official_raw = by_channel.get("official")
+        bilibili_raw = by_channel.get("bilibili")
+        
+        def fmt(v):
+            return f"{float(v):.2f}" if v is not None else "-"
+        
+        official = None
+        bilibili = None
+        if official_raw:
+            official = {
+                "total_users": official_raw.get("total_users", 0),
+                "total_pulls": official_raw.get("total_pulls", 0),
+                "star6_total": official_raw.get("star6_total", 0),
+                "avg_pity": fmt(official_raw.get("avg_pity"))
+            }
+        if bilibili_raw:
+            bilibili = {
+                "total_users": bilibili_raw.get("total_users", 0),
+                "total_pulls": bilibili_raw.get("total_pulls", 0),
+                "star6_total": bilibili_raw.get("star6_total", 0),
+                "avg_pity": fmt(bilibili_raw.get("avg_pity"))
+            }
+        
+        # Pool sections - need to build this first for UP rate calculation
+        by_type = s.get("by_type", {})
+        
+        # UP win rate - calculated as UP char count / limited pool 6-star total
+        # The UP rate shown is the percentage of UP 6-star among all 6-star in the current limited pool
+        up_win_rate = "--.-"
+        up_win_rate_num = 0
+        up_weapon_win_rate = "--.-"
+        up_weapon_win_rate_num = 0
+        up_entry = None
+        limited_star6 = 0
+        
+        # Get UP rate from pool_periods
+        pool_periods = s.get("pool_periods", [])
+        period_data = None
+        if period_label == "当期 UP":
+            for p in pool_periods:
+                if up_name in (p.get("up_char_names", []) or []):
+                    period_data = p
+                    break
+        else:
+            for p in pool_periods:
+                p_name = p.get("pool_name", "")
+                if period_label == p_name or period_label in p_name:
+                    period_data = p
+                    break
+
+        if period_data and period_data.get("star6_count", 0) > 0:
+            up_win_rate_val = (period_data.get("up_count", 0) / period_data.get("star6_count")) * 100
+            up_win_rate = f"{up_win_rate_val:.1f}"
+            up_win_rate_num = min(100, max(0, up_win_rate_val))
+            logger.info(f"[全服统计] UP 计算从 pool_periods: {up_win_rate_val:.2f}%")
+        else:
+            # Fallback if not found in pool_periods
+            up_percent = pool.get("up_percent") or pool.get("up_rate") or pool.get("up_win_rate") or pool.get("up_percentage")
+            if up_percent is not None:
+                up_win_rate_val = float(up_percent)
+                up_win_rate = f"{up_win_rate_val:.1f}"
+                up_win_rate_num = min(100, max(0, up_win_rate_val))
+            else:
+                limited_data = by_type.get("limited", {})
+                limited_star6 = limited_data.get("star6", 0) if limited_data else 0
+                ranking_limited = s.get("ranking", {}).get("limited", {}).get("six_star", [])
+                up_entry = None
+                if up_char_names:
+                    for name in up_char_names:
+                        up_entry = next((r for r in ranking_limited if (r.get("char_name") or "").strip() == name.strip()), None)
+                        if up_entry: break
+                
+                if up_entry and up_entry.get("count") is not None and limited_star6 > 0:
+                    up_win_rate_val = (up_entry.get("count", 0) / limited_star6) * 100
+                    up_win_rate = f"{up_win_rate_val:.1f}"
+                    up_win_rate_num = min(100, max(0, up_win_rate_val))
+        
+        # Weapon UP rate calculation
+        weapon_pool_periods = s.get("weapon_pool_periods", [])
+        weapon_period_data = None
+        # Default active weapon pool is handled as active weapon
+        for wp in weapon_pool_periods:
+            if up_weapon_name in (wp.get("up_weapon_names", []) or []):
+                weapon_period_data = wp
+                break
+                
+        if weapon_period_data and weapon_period_data.get("star6_count", 0) > 0:
+            up_weapon_win_rate_val = (weapon_period_data.get("up_count", 0) / weapon_period_data.get("star6_count")) * 100
+            up_weapon_win_rate = f"{up_weapon_win_rate_val:.1f}"
+            up_weapon_win_rate_num = min(100, max(0, up_weapon_win_rate_val))
+            logger.info(f"[全服统计] Weapon UP 计算从 weapon_pool_periods: {up_weapon_win_rate_val:.2f}%")
+        else:
+            weapon_data = by_type.get("weapon", {})
+        weapon_star6 = weapon_data.get("star6", 0) if weapon_data else 0
+        
+        if up_weapon_name and weapon_star6 > 0:
+            ranking_weapon = s.get("ranking", {}).get("weapon", {}).get("six_star", [])
+            # Try exact match first
+            up_weapon_entry = next((r for r in ranking_weapon if (r.get("char_name") or "").strip() == up_weapon_name.strip()), None)
+            if not up_weapon_entry:
+                up_weapon_entry = next((r for r in ranking_weapon if up_weapon_name in (r.get("char_name") or "")), None)
+            if up_weapon_entry and up_weapon_entry.get("count") is not None:
+                weapon_up_count = up_weapon_entry.get("count", 0)
+                up_weapon_win_rate_val = (weapon_up_count / weapon_star6) * 100
+                up_weapon_win_rate = f"{up_weapon_win_rate_val:.1f}"
+                up_weapon_win_rate_num = min(100, max(0, up_weapon_win_rate_val))
+        
+        # Debug logging for troubleshooting
+        logger.info(f"[全服统计] UP 计算调试：up_name={up_name}, up_count={up_entry.get('count') if up_entry else 'N/A'}, limited_star6={limited_star6}, up_win_rate={up_win_rate}")
+        
+        # Pool sections - already defined above
+        
+        def build_distribution_list(dist_raw):
+            if not dist_raw:
+                return []
+            max_c = max((d.get("count", 0) for d in dist_raw), default=1)
+            result = []
+            for d in dist_raw:
+                count = d.get("count", 0)
+                result.append({
+                    "range": d.get("range", "-"),
+                    "count": count,
+                    "height": min(100, max(8, (count / max_c) * 100)) if max_c > 0 else 0
+                })
+            return result
+        
+        def build_ranking_list(six_star, is_limited):
+            if not six_star:
+                return []
+            result = []
+            for r in six_star:
+                char_name_r = r.get("char_name", "-")
+                is_up = is_limited and up_char_names and any((char_name_r or "") == n or n in (char_name_r or "") for n in up_char_names)
+                result.append({
+                    "char_name": char_name_r or "-",
+                    "count": r.get("count", 0),
+                    "percent": f"{float(r['percent']):.1f}" if r.get("percent") is not None else "0",
+                    "isUp": is_up
+                })
+            return result
+        
+        def build_pool_section(key, label, rank_top=8):
+            pool_data = by_type.get(key, {})
+            pool_total = pool_data.get("total", 0)
+            pool_star6 = pool_data.get("star6", 0)
+            p_avg_pity = f"{float(pool_data['avg_pity']):.1f}" if pool_data.get("avg_pity") is not None else "-"
+            p_star6_rate = f"{(pool_star6 / pool_total * 100):.2f}%" if pool_total > 0 else "0%"
+            
+            ranking_key = "weapon" if key == "weapon" else "limited" if key == "limited" else "standard"
+            ranking_list6 = build_ranking_list(
+                s.get("ranking", {}).get(ranking_key, {}).get("six_star", []),
+                key == "limited"
+            )[:rank_top]
+            ranking_list5 = build_ranking_list(
+                s.get("ranking", {}).get(ranking_key, {}).get("five_star", []),
+                False
+            )[:rank_top]
+            
+            return {
+                "label": label,
+                "key": key,
+                "total": pool_total,
+                "star6": pool_star6,
+                "star5": pool_data.get("star5", 0),
+                "star4": pool_data.get("star4", 0),
+                "avgPity": p_avg_pity,
+                "star6Rate": p_star6_rate,
+                "distributionList": build_distribution_list(pool_data.get("distribution")),
+                "showRanking": True,
+                "rankingList6": ranking_list6,
+                "rankingList5": ranking_list5,
+                "rankingTab6": "6 星武器" if key == "weapon" else "6 星干员",
+                "rankingTab5": "5 星武器" if key == "weapon" else "5 星干员"
+            }
+        
+        pool_sections = [
+            build_pool_section("beginner", "新手池", 5),
+            build_pool_section("standard", "常驻角色", 5),
+            build_pool_section("weapon", "武器池", 5),
+            build_pool_section("limited", "限定角色", 8)
+        ]
+        
+        # Disable ranking for beginner pool
+        pool_sections[0]["showRanking"] = False
+        
+        # Update limited pool ranking to show top 8 for 6-star and more for 5-star
+        for sec in pool_sections:
+            if sec["key"] == "limited":
+                # Rebuild ranking lists with proper counts
+                ranking_key = "limited"
+                sec["rankingList6"] = build_ranking_list(
+                    s.get("ranking", {}).get(ranking_key, {}).get("six_star", [])[:8],
+                    True
+                )
+                sec["rankingList5"] = build_ranking_list(
+                    s.get("ranking", {}).get(ranking_key, {}).get("five_star", [])[:9],
+                    False
+                )
+        
+        # Sync time
+        sync_time = "缓存约 5 分钟" if data.get("cached") else "刚刚"
+        if data.get("last_update"):
+            try:
+                d = datetime.datetime.fromtimestamp(int(data["last_update"]))
+                sync_time = d.strftime("%Y-%m-%d %H:%M")
+            except:
+                sync_time = str(data["last_update"])
+        
+        render_data = {
+            "title": "全服寻访统计",
+            "periodLabel": period_label,
+            "syncTime": sync_time,
+            "totalPulls": total_pulls,
+            "totalUsers": total_users,
+            "star6": star6,
+            "globalAvgPity": avg_pity,
+            "showUpBlock": bool((up_name and up_name != "-") or (up_weapon_name and up_weapon_name != "")),
+            "upName": up_name if up_name != "-" else "",
+            "upWeaponName": up_weapon_name,
+            "upWinRate": up_win_rate + "%",
+            "upWinRateNum": up_win_rate_num,
+            "upWeaponWinRate": up_weapon_win_rate + "%",
+            "upWeaponWinRateNum": up_weapon_win_rate_num,
+            "official": official,
+            "bilibili": bilibili,
+            "poolSections": pool_sections,
+            "pluResPath": "file:///" + os.path.abspath(self.renderer.res_path).replace("\\", "/") + "/",
+            "periodHint": "发送 :全服统计 <干员名> 可查看其他期数",
+            "copyright": "Endfield Plugin | AstrBot"
+        }
+        
+        try:
+            url = await self.renderer.render_html("gacha/global-stats.html", render_data)
+            if url:
+                yield event.image_result(url)
+                return
+        except Exception as e:
+            logger.error(f"Global gacha stats render failed: {e}")
+        
+        # Fallback to text
+        text = f"【全服抽卡统计】"
+        if period_label != "当期 UP":
+            text += f" · {period_label}"
+        text += f"\n总抽数：{total_pulls} | 统计用户：{total_users}\n"
+        text += f"六星：{star6} | 五星：{star5} | 四星：{star4} | 平均出货：{avg_pity} 抽\n"
+        text += f"当前 UP：{up_name}\n"
+        if official:
+            text += f"官服：{official['total_users']} 人，{official['total_pulls']} 抽，均出 {official['avg_pity']}\n"
+        if bilibili:
+            text += f"B服：{bilibili['total_users']} 人，{bilibili['total_pulls']} 抽，均出 {bilibili['avg_pity']}\n"
+        text += "\n发送 :全服统计 <干员名> 可查看其他期数\n"
+        if data.get("cached"):
+            text += "（缓存约 5 分钟）"
+        yield event.plain_result(text)
 
     async def terminate(self):
         if self._announcement_task_handle:

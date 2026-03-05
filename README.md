@@ -36,18 +36,13 @@
 
 ## ✨ 特性一览
 
-✅ **账号管理** - 多账号绑定/切换/删除，主账号快速切换 
-
+✅ **账号管理** - 扫码登录/网页授权/多账号切换/删除，主账号快速切换  
+✅ **消息撤回** - 登录链接与二维码超时、完成或被拒时自动撤回，保护账号安全
 ✅ **数据查询** - 理智、干员、抽卡、建设进度
-
 ✅ **自动签到** - 每日自动执行森空岛签到
-
-✅ **公告推送** - 官方公告实时获取与订阅推送
-
+✅ **公告推送** - 官方公告实时获取与订阅
 ✅ **订阅提醒** - 理智满值时自动推送通知
-
 ✅ **卡池分析** - 抽卡数据统计与可视化  
-
 
 ---
 
@@ -135,7 +130,7 @@ astrbot_plugin_endfield/
 | `日历` | 活动版本日历 |
 | `公告` / `订阅公告` | 官方公告列表/订阅推送 |
 | `最新公告` | 获取官方最新发布的公告内容 |
-
+| `全服统计` | 获取全服抽卡统计分析 |
 ---
 
 ## 📸 功能预览
@@ -161,8 +156,11 @@ astrbot_plugin_endfield/
 
 | `xx面板` | `zmd` |
 |:---:|:---:|
-| <img width="2200" height="2036" alt="9045c4a094a6b434815e31abc696dbac" src="https://github.com/user-attachments/assets/d8422043-106f-44e3-9b61-4b3faa5998f0" /> | <img width="1280" height="1480" alt="d4082ea8f03d293df5a73d21e7ed3acc_720" src="https://github.com/user-attachments/assets/4bb0bf3d-b9b9-43f2-a5ba-81bc7909956f" />
- |
+| <img width="2200" height="2036" alt="9045c4a094a6b434815e31abc696dbac" src="https://github.com/user-attachments/assets/d8422043-106f-44e3-9b61-4b3faa5998f0" /> | <img width="1280" height="1480" alt="d4082ea8f03d293df5a73d21e7ed3acc_720" src="https://github.com/user-attachments/assets/4bb0bf3d-b9b9-43f2-a5ba-81bc7909956f" /> |
+
+| `全服统计` |
+|:---:|
+| <img src="https://github.com/user-attachments/assets/5e86a76b-0d06-4f7b-97fc-6b914f57efb3" width="400"> |
 
 </details>
 
@@ -189,7 +187,7 @@ astrbot_plugin_endfield/
 - [ ] **Wiki增强** (装备/物品/武器百科)
 - [ ] **攻略模块** (角色/地图攻略图)
 - [ ] **MaaEnd远程控制** (状态监控与远程操作)
-- [ ] **管理员功能** (全员签到/数据同步)
+- [x] **管理员功能** (全员签到/数据同步)
 
 ---
 
@@ -211,6 +209,12 @@ astrbot_plugin_endfield/
 
 <details>
 <summary>点击展开版本历史</summary>
+
+### 2.0.0 (2026-03-05)
+- ✨ 新增全服统计
+- 🛡️ 登录成功/超时/被拒后自动撤回二维码或链接 
+- 🚀 优化协议端调用
+- 📊 优化 API 日志
 
 ### 1.8.0 (2026-03-03)
 - ✨ 干员面板修复
@@ -282,7 +286,6 @@ astrbot_plugin_endfield/
 [⬆ 返回顶部](#-astrbot_plugin_endfield)
 
 </div>
-
 
 
 
