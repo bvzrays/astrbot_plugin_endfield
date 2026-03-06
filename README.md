@@ -160,7 +160,7 @@ astrbot_plugin_endfield/
 
 | `全服统计` |
 |:---:|
-| <img width="1440" height="2942" alt="f282a7a2b2947e407c49ebc880bd6bd2" src="https://github.com/user-attachments/assets/a5152de5-03bf-49cc-be6e-4a12e25477b5" /> |
+| <img width="1440" height="2942" alt="f282a7a2b2947e407c49ebc880bd6bd2" src="https://github.com/user-attachments/assets/a5152de5-03bf-49cc-be6e-4a12e25477b5" width="400"/> |
  |
 
 </details>
@@ -287,6 +287,7 @@ astrbot_plugin_endfield/
 [⬆ 返回顶部](#-astrbot_plugin_endfield)
 
 </div>
+
 
 
 
