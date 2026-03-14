@@ -1,0 +1,392 @@
+@font-face {
+    font-family: 'HarmonyOS Sans SC';
+    src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #f5f5f5;
+    font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+    min-height: 100vh;
+    padding: 24px 0;
+    margin: 0;
+}
+
+.operator-list-container {
+    margin: 0 auto;
+    padding: 24px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* 标题栏重写：网格三列，左右对称内边距，保证右侧与左侧同样留白 */
+.list-top-bar {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 16px 28px;
+    background: #f9fafb;
+    border-radius: 8px;
+    position: relative;
+    z-index: 2;
+    box-sizing: border-box;
+}
+
+.list-top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.list-top-bar-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+}
+
+.list-top-bar-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+    object-fit: cover;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-name {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.user-level {
+    font-size: 1.5rem;
+    color: #6b7280;
+}
+
+.list-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.list-subtitle {
+    font-size: 1.5rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.logo-image {
+    height: 55px;
+    width: auto;
+    max-width: 140px;
+    object-fit: contain;
+    display: block;
+}
+
+.operators-grid {
+    display: grid;
+    align-content: start;
+    justify-content: start;
+    position: relative;
+    z-index: 1;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.operator-card {
+    position: relative;
+    width: 300px;
+    height: 450px;
+    overflow: hidden;
+    isolation: isolate;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+/* 星级标签：放在 .showcase-inner 内，贴卡片右下角，加大字号与内边距 */
+.showcase-inner .card-rarity-badge {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    top: auto;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(6px / var(--list-card-scale, 0.08));
+    padding: calc(8px / var(--list-card-scale, 0.08)) calc(14px / var(--list-card-scale, 0.08)) calc(8px / var(--list-card-scale, 0.08)) calc(16px / var(--list-card-scale, 0.08));
+    border-radius: 0;
+    box-shadow: -2px -2px 8px rgba(0, 0, 0, 0.25);
+    font-size: calc(28px / var(--list-card-scale, 0.08));
+    font-weight: bold;
+    font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+    box-sizing: border-box;
+}
+.card-rarity-badge {
+    /* 若未在 .showcase-inner 内则保留兜底（不应出现） */
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 5px 10px 6px 12px;
+    border-radius: 0;
+    font-size: 1.15rem;
+    font-weight: bold;
+    box-sizing: border-box;
+}
+.card-rarity-star-img {
+    width: 1.35em;
+    height: 1.35em;
+    object-fit: contain;
+    display: block;
+    filter: brightness(0) invert(1);
+}
+.card-rarity-num {
+    line-height: 1;
+}
+.card-rarity-6 {
+    background: #dc2626;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+}
+.card-rarity-5 {
+    background: #eab308;
+    color: #1c1917;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+.card-rarity-4 {
+    background: #7c3aed;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+/* 卡片边框光效与星级一致（纯色） */
+.operator-card[data-rarity="6"] .showcase-inner {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(220, 38, 38, 0.6), 0 0 12px rgba(220, 38, 38, 0.2);
+}
+.operator-card[data-rarity="5"] .showcase-inner {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(234, 179, 8, 0.6), 0 0 10px rgba(234, 179, 8, 0.2);
+}
+.operator-card[data-rarity="4"] .showcase-inner {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 1px rgba(124, 58, 237, 0.6), 0 0 8px rgba(139, 92, 246, 0.2);
+}
+
+/* 好友公开展示干员：绿色边框覆盖（优先级高于稀有度边框） */
+.operator-card[data-friend-showcase="1"] .showcase-inner {
+    --border-color: #22c55e;
+    --stroke-color: #16a34a;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 0 0 2px rgba(34, 197, 94, 0.85), 0 0 14px rgba(34, 197, 94, 0.35);
+}
+
+.operator-card .showcase-inner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 800px;
+    height: 1200px;
+    transform: scale(var(--list-card-scale, 0.08));
+    transform-origin: 0 0;
+    background: rgba(255, 255, 255, 0.92);
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --stroke-color: #888888;
+    --stroke-width: 6px;
+    --tri1-color: #888888;
+    --tri2-color: rgba(136, 136, 136, 0.5);
+    --border-color: #888888;
+    --title-color: #ffffff;
+    border: 7px solid var(--border-color);
+    box-sizing: border-box;
+}
+
+.operator-card .background-character {
+    position: absolute;
+    left: -29px;
+    top: 0;
+    width: 858px;
+    height: 1200px;
+    overflow: hidden;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.operator-card .background-character img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 858px;
+    height: 1200px;
+    object-fit: cover;
+}
+
+.operator-card .card-icons {
+    position: absolute;
+    left: 36px;
+    top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.operator-card .card-icons .decoration-image,
+.operator-card .card-icons .property-icon {
+    width: 140px;
+    height: 140px;
+    overflow: hidden;
+}
+
+.operator-card .card-icons .decoration-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.operator-card .card-icons .property-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.operator-card .left-triangles {
+    position: absolute;
+    width: 235.5px;
+    height: 1186px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.operator-card .triangle-vector-2 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 172.5px;
+    height: 680.5px;
+    z-index: 3;
+}
+
+.operator-card .triangle-vector-1 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 235.5px;
+    height: 1186px;
+    z-index: 2;
+}
+
+.operator-card .triangle-vector-1 path {
+    fill: var(--tri1-color);
+}
+
+.operator-card .triangle-vector-2 path {
+    fill: var(--tri2-color);
+}
+
+.operator-card .vertical-title-container {
+    position: absolute;
+    left: 65px;
+    top: 420px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    width: 160px;
+    min-height: 600px;
+    max-height: 650px;
+    z-index: 10;
+    overflow: visible;
+}
+
+.operator-card .vertical-title-char {
+    display: block;
+    font-size: 120px;
+    font-weight: bold;
+    color: var(--title-color);
+    line-height: 1.3;
+    font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+    -webkit-text-stroke: var(--stroke-width, 6px) var(--stroke-color);
+    paint-order: stroke fill;
+    overflow: visible;
+    text-shadow:
+        6px 0 var(--stroke-color),
+        -6px 0 var(--stroke-color),
+        0 6px var(--stroke-color),
+        0 -6px var(--stroke-color),
+        4.24px 4.24px var(--stroke-color),
+        -4.24px -4.24px var(--stroke-color),
+        4.24px -4.24px var(--stroke-color),
+        -4.24px 4.24px var(--stroke-color),
+        0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* 干员卡片左下角：潜能等级 */
+.operator-card .card-potential-wrap {
+    position: absolute;
+    left: 28px;
+    bottom: 28px;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.operator-card .card-potential-text {
+    font-size: 5.5rem;
+    font-weight: bold;
+    color: #FFFFFF;
+    font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* 干员卡片右上角：精英化阶段图标（黑底），加大显示 */
+.operator-card .card-phase-potential {
+    position: absolute;
+    right: 24px;
+    top: 24px;
+    z-index: 5;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.75);
+    padding: 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.operator-card .card-phase-icon {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+}

@@ -1,0 +1,60 @@
+{
+  "api_key": {
+    "description": "API Key",
+    "type": "string",
+    "hint": "请前往 https://end.shallow.ink 获取秘钥",
+    "obvious_hint": true,
+    "default": ""
+  },
+  "auth_client_name": {
+    "description": "授权客户端名称",
+    "type": "string",
+    "default": "终末地机器人"
+  },
+  "operator_list_bg": {
+    "description": "干员列表背景图",
+    "type": "string",
+    "enum": [
+      "random",
+      "bg1.png",
+      "bg2.png"
+    ],
+    "default": "random"
+  },
+  "render_timeout": {
+    "description": "图片渲染超时时间(ms)",
+    "type": "int",
+    "default": 30000
+  },
+  "announcement_poll_interval": {
+    "description": "公告订阅推送轮询间隔（分钟）",
+    "type": "int",
+    "default": 10
+  },
+  "auto_sign_in": {
+    "description": "是否开启每日自动签到（每天自动执行）",
+    "type": "bool",
+    "default": true
+  },
+  "auto_sign_in_time": {
+    "description": "自动签到执行时间 (格式 HH:MM)",
+    "type": "string",
+    "default": "00:05"
+  },
+  "auto_sign_in_interval": {
+    "description": "自动签到账号间隔（秒）",
+    "type": "int",
+    "default": 3
+  },
+  "auto_sign_in_notify_group": {
+    "description": "自动签到通知群号",
+    "type": "string",
+    "hint": "填入群号。若无法发送，请尝试填入完整 ID (如 aiocqhttp:group:123456)",
+    "default": ""
+  },
+  "sanity_poll_interval": {
+    "description": "理智订阅轮询间隔（分钟）",
+    "type": "int",
+    "default": 20
+  }
+}

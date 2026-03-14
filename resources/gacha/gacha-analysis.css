@@ -1,0 +1,455 @@
+/* 抽卡分析 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 580px;
+  overflow-x: hidden;
+  background: #f0f1f3;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.gacha-analysis-container {
+  width: 580px;
+  padding: 14px 16px 6px;
+}
+
+/* ========== 顶部栏 ========== */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+  border-radius: 10px;
+  position: relative;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  object-fit: cover;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.user-uid {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.top-bar-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.top-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.top-sub {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.top-logo {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.top-logo img {
+  height: 42px;
+  width: auto;
+}
+
+/* ========== 统计概览 ========== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.stat-item {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-num {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.68rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.stat-6 {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.stat-6 .stat-num {
+  color: #dc2626;
+}
+
+.stat-5 {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.stat-5 .stat-num {
+  color: #d97706;
+}
+
+.stat-4 {
+  border-color: #ddd6fe;
+  background: #f5f3ff;
+}
+
+.stat-4 .stat-num {
+  color: #7c3aed;
+}
+
+/* ========== 时间 + 提示 ========== */
+.time-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.analysis-time {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.sync-hint {
+  font-size: 0.75rem;
+  color: #1f2937;
+}
+
+/* ========== 池组 ========== */
+.pool-group {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.pool-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.pool-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pool-group-title {
+  font-size: 1.05rem;
+  font-weight: bold;
+  color: #1f2937;
+  padding-left: 10px;
+  border-left: 4px solid #374151;
+}
+
+.pool-group-empty {
+  font-size: 0.85rem;
+  color: #d1d5db;
+  padding: 8px 0;
+  text-align: center;
+}
+
+/* 池条目 */
+.pool-entry {
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #f0f0f0;
+}
+
+.pool-group .pool-entry:last-child {
+  margin-bottom: 0;
+}
+
+.pool-entry-header {
+  margin-bottom: 6px;
+}
+
+.pool-entry-name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.pool-entry-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pool-entry-metrics .metric:first-child {
+  font-weight: bold;
+  color: #1f2937;
+}
+
+/* ========== 六星进度条列表 ========== */
+.star6-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.star6-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.star6-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.star6-icon-pity {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.star6-icon-free {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fef3c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #92400e;
+  flex-shrink: 0;
+}
+
+/* 进度条 */
+.bar-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+  height: 28px;
+  background: #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.bar-ref {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px dashed rgba(229, 62, 62, 0.9);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.bar-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  min-width: 40px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  overflow: hidden;
+}
+
+.bar-not-full {
+  border-radius: 14px 0 0 14px;
+}
+
+.bar-text {
+  position: relative;
+  z-index: 2;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* 进度条颜色 */
+.bar-level-green {
+  background: #22c55e;
+}
+
+.bar-level-yellow {
+  background: #eab308;
+}
+
+.bar-level-red {
+  background: #ef4444;
+}
+
+.bar-level-free {
+  background: #f59e0b;
+}
+
+/* 继承垫抽蓝色覆盖层（位于 bar-inner 内部） */
+.bar-inherit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #3b82f6;
+  border-radius: 14px 0 0 14px;
+  z-index: 1;
+}
+
+/* 行末状态标签 */
+.star6-tag {
+  flex-shrink: 0;
+  margin-left: 4px;
+  width: 28px;
+  height: 22px;
+  min-width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.star6-tag-wai {
+  color: #fff;
+  background: #64748b;
+}
+
+.star6-tag-baodi {
+  color: #fff;
+  background: #0284c7;
+}
+
+.star6-tag-up {
+  color: #fff;
+  background: #b45309;
+}
+
+.star6-tag-normal {
+  background: transparent;
+}
+
+.star6-tag-empty {
+  background: transparent;
+}
+
+.pity-row {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+.free-row {
+  margin-top: 2px;
+  padding-top: 4px;
+  border-top: 1px dashed #e5e7eb;
+}
+
+/* ========== 页脚 ========== */
+.footer {
+  text-align: center;
+  margin-top: 4px;
+  padding: 6px 0 0;
+}
+
+.footer-text {
+  font-size: 0.7rem;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.footer-text .version {
+  margin-left: 2px;
+  color: #007180;
+}

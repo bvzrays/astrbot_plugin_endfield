@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}gacha/global-stats.css">
+</head>
+<body>
+  <div class="gs-container">
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+      <div class="top-bar-center">
+        <h1 class="top-title">{{title}}{{if periodLabel}} · {{periodLabel}}{{/if}}</h1>
+        <p class="top-sub">{{syncTime}}</p>
+      </div>
+      {% if pluResPath %}
+      <div class="top-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 全局概览 -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">{{totalPulls}}</span>
+        <span class="stat-label">总抽数</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">{{totalUsers}}</span>
+        <span class="stat-label">统计用户</span>
+      </div>
+      <div class="stat-item stat-6">
+        <span class="stat-num">{{star6}}</span>
+        <span class="stat-label">6 星总数</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">{{globalAvgPity}}</span>
+        <span class="stat-label">平均出货</span>
+      </div>
+    </div>
+
+    <!-- UP 区块 -->
+    {% if showUpBlock %}
+    <div class="up-grid">
+      {% if upName %}
+      <div class="up-card up-card-char">
+        <div class="up-card-top">
+          <span class="up-tag">角色 UP</span>
+          <span class="up-name">{{upName}}</span>
+        </div>
+        <div class="up-card-bottom">
+          <span class="up-rate-label">出货占比</span>
+          <div class="up-rate-row">
+            <span class="up-rate">{{upWinRate}}</span>
+            <div class="up-bar-wrap"><div class="up-bar-fill up-bar-char" style="height:{{upWinRateNum}}%;"></div></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% if upWeaponName %}
+      <div class="up-card up-card-weapon">
+        <div class="up-card-top">
+          <span class="up-tag up-tag-weapon">武器 UP</span>
+          <span class="up-weapon-name">{{upWeaponName}}</span>
+        </div>
+        <div class="up-card-bottom">
+          <span class="up-rate-label">出货占比</span>
+          <div class="up-rate-row">
+            <span class="up-rate up-rate-weapon">{{upWeaponWinRate}}</span>
+            <div class="up-bar-wrap"><div class="up-bar-fill up-bar-weapon" style="height:{{upWeaponWinRateNum}}%;"></div></div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 官服 / B 服 -->
+    {% if official or bilibili %}
+    <div class="channel-row">
+      {% if official %}
+      <div class="channel-card">
+        <div class="channel-title">官服 CN-01</div>
+        <div class="channel-body">
+          <div><span class="ch-label">用户</span><span class="ch-val">{{official.total_users}}</span></div>
+          <div><span class="ch-label">总抽</span><span class="ch-val">{{official.total_pulls}}</span></div>
+          <div><span class="ch-label">6 星</span><span class="ch-val ch-red">{{official.star6_total}}</span></div>
+          <div><span class="ch-label">均出</span><span class="ch-val">{{official.avg_pity}}</span></div>
+        </div>
+      </div>
+      {% endif %}
+      {% if bilibili %}
+      <div class="channel-card">
+        <div class="channel-title">B 服 CN-02</div>
+        <div class="channel-body">
+          <div><span class="ch-label">用户</span><span class="ch-val">{{bilibili.total_users}}</span></div>
+          <div><span class="ch-label">总抽</span><span class="ch-val">{{bilibili.total_pulls}}</span></div>
+          <div><span class="ch-label">6 星</span><span class="ch-val ch-red">{{bilibili.star6_total}}</span></div>
+          <div><span class="ch-label">均出</span><span class="ch-val">{{bilibili.avg_pity}}</span></div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 卡池分区：常驻 + 新手 2 列，武器全宽，限定全宽 -->
+    <div class="pool-grid">
+    {% for sec in poolSections %}
+    <div class="pool-section{% if sec.key == 'limited' or sec.key == 'beginner' %} pool-full{% endif %}{% if sec.key == 'beginner' %} pool-beginner{% endif %}">
+      <div class="pool-header">
+        <span class="pool-name">{{sec.label}}</span>
+        <span class="pool-total">{{sec.total}} 抽</span>
+      </div>
+      <div class="pool-stats">
+        <div class="ps-item"><span class="ps-val ps-red">{{sec.star6}}</span><span class="ps-label">6 星</span></div>
+        <div class="ps-item"><span class="ps-val ps-yellow">{{sec.star5}}</span><span class="ps-label">5 星</span></div>
+        <div class="ps-item"><span class="ps-val ps-purple">{{sec.star4}}</span><span class="ps-label">4 星</span></div>
+        <div class="ps-item"><span class="ps-val">{{sec.avgPity}}</span><span class="ps-label">均出</span></div>
+        <div class="ps-item"><span class="ps-val">{{sec.star6Rate}}</span><span class="ps-label">6 星率</span></div>
+      </div>
+
+      {% if sec.distributionList and sec.distributionList|length > 0 %}
+      <div class="dist-chart-h">
+        {% for d in sec.distributionList %}
+        <div class="dist-row">
+          <span class="dist-label">{{d.range}}</span>
+          <div class="dist-bar-h-outer"><div class="dist-bar-h" style="width:{{d.height}}%;"></div></div>
+          <span class="dist-count">{{d.count}}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if sec.showRanking %}
+      <div class="pool-ranking">
+        <div class="ranking-col">
+          <div class="ranking-title rk-6">{{sec.rankingTab6}}</div>
+          {% for r in sec.rankingList6 %}
+          <div class="ranking-row">
+            <span class="rk-rank">{{loop.index}}</span>
+            <span class="rk-name">{{r.char_name}}{% if r.isUp %} <span class="rk-up">UP</span>{% endif %}</span>
+            <span class="rk-count">{{r.count}}</span>
+            <div class="rk-bar"><div class="rk-bar-fill rk-fill-6" style="width:{{r.percent}}%;"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="ranking-col">
+          <div class="ranking-title rk-5">{{sec.rankingTab5}}</div>
+          {% for r in sec.rankingList5 %}
+          <div class="ranking-row">
+            <span class="rk-rank">{{loop.index}}</span>
+            <span class="rk-name">{{r.char_name}}</span>
+            <span class="rk-count">{{r.count}}</span>
+            <div class="rk-bar"><div class="rk-bar-fill rk-fill-5" style="width:{{r.percent}}%;"></div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-note">所有数据来源于已绑定账号的玩家自动同步，数据缓存 5 分钟</div>
+      {% if periodHint %}
+      <div class="footer-hint">{{periodHint}}</div>
+      {% endif %}
+      <div class="footer-text">{{copyright|safe}}</div>
+    </footer>
+  </div>
+</body>
+</html>

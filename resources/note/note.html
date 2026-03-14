@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} - {{subtitle}}</title>
+  <link rel="stylesheet" href="{{_res_path}}note/note.css">
+</head>
+
+<body>
+  <div class="note-container">
+    <div class="list-top-bar">
+      <div class="list-header-middle">
+        <h1 class="list-title">{{title}}</h1>
+      </div>
+      {% if pluResPath %}
+      <div class="logo-container list-top-bar-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 基础信息：参考图头部布局 -->
+    <div class="note-basic-wrap">
+      <div class="note-basic-inner">
+        <div class="note-basic-header">
+          {% if base.avatarUrl %}
+          <img src="{{base.avatarUrl}}" alt="" class="note-basic-avatar" onerror="this.style.display='none'">
+          {% endif %}
+          <div class="note-basic-info">
+            <p class="note-basic-game">// ARKNIGHTS: ENDFIELD</p>
+            <h2 class="note-basic-name">{{base.name}}</h2>
+            <div class="note-basic-meta">
+              <span class="note-basic-uid">UID {{base.roleId}}</span>
+              {% if base.awakeningDateStr %}
+              <span class="note-basic-meta-sep">·</span>
+              <span class="note-basic-awake">苏醒日 {{base.awakeningDateStr}}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="note-basic-data">
+          <div class="note-basic-row1">
+            <div class="note-stat-card note-mission-card">
+              <span class="note-mission-title">{{base.mainMissionDesc}}</span>
+              <span class="note-stat-label">使命纪事</span>
+            </div>
+            <div class="note-stat-card"><span class="note-stat-num">{{base.level}}</span><span
+                class="note-stat-label">权限等阶</span></div>
+            <div class="note-stat-card"><span class="note-stat-num">{{base.worldLevel}}</span><span
+                class="note-stat-label">探索等级</span></div>
+          </div>
+          <div class="note-basic-row2">
+            <div class="note-stat-card"><span class="note-stat-num">{{stats.charNum}}</span><span
+                class="note-stat-label">干员</span></div>
+            <div class="note-stat-card"><span class="note-stat-num">{{stats.weaponNum}}</span><span
+                class="note-stat-label">武器</span></div>
+            <div class="note-stat-card"><span class="note-stat-num">{{stats.docNum}}</span><span
+                class="note-stat-label">档案</span></div>
+            <div class="note-stat-card"><span
+                class="note-stat-num">{{stats.staminaCurrent}}/{{stats.staminaMax}}</span><span
+                class="note-stat-label">理智</span></div>
+            <div class="note-stat-card"><span
+                class="note-stat-num">{{stats.activation}}/{{stats.maxActivation}}</span><span
+                class="note-stat-label">活跃度</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-wrap note-card">
+      <div class="note-section-title">已拥有干员（{{chars | length}} 个）</div>
+      {% if chars and (chars | length) > 0 %}
+      <div class="note-chars-grid">
+        {% for char in chars %}
+        <div class="note-char-item">
+          {% if char.sqUrl %}
+          <img src="{{char.sqUrl}}" alt="" class="note-char-img" onerror="this.style.display='none'">
+          {% endif %}
+          <span class="note-char-name">{{char.name}}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="note-empty">暂无干员</div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+
+</html>

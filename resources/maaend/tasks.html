@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MaaEnd 任务列表</title>
+  <link rel="stylesheet" href="{{_res_path}}maaend/tasks.css">
+</head>
+<body>
+  <div class="maa-container">
+    <div class="maa-card">
+      <!-- 设备信息头 -->
+      <div class="maa-header">
+        <div class="device-info">
+          <div class="device-name">{{deviceName}}</div>
+          <div class="device-meta">
+            <span class="status status-{{status}}">{{statusText}}</span>
+            {{if version}}<span class="device-ver">{{version}}</span>{{/if}}
+          </div>
+        </div>
+        {{if pluResPath}}
+        <div class="logo-wrap">
+          <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- 任务列表 -->
+      <div class="task-section">
+        <div class="section-label">可用任务（{{taskCount}}）</div>
+        {{if taskCount === 0}}
+        <div class="empty-hint">暂无可用任务</div>
+        {{else}}
+        <div class="task-list">
+          {{each tasks task}}
+          <div class="task-item">
+            <div class="task-index">{{task.index}}</div>
+            <div class="task-body">
+              <div class="task-name-row">
+                <span class="task-name">{{task.name}}</span>
+                {{if task.label}}<span class="task-label">{{task.label}}</span>{{/if}}
+              </div>
+              {{if task.description}}
+              <div class="task-desc">{{task.description}}</div>
+              {{/if}}
+              {{each task.options opt}}
+              <div class="task-option">
+                <span class="opt-key">{{opt.label}}</span>
+                <span class="opt-cases">{{opt.casesText}}</span>
+              </div>
+              {{/each}}
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- 环境信息 -->
+      <div class="env-section">
+        <span class="env-tag">控制器 {{controllerText}}</span>
+        <span class="env-tag">资源 {{resourceText}}</span>
+      </div>
+
+      <!-- 使用提示 -->
+      <div class="hint-section">
+        <div class="hint-text">:maa 执行 [任务名或序号] <span class="hint-sub">（按序号执行）</span></div>
+        <div class="hint-text">:maa 执行 {{firstTaskName}}<span class="hint-sub">（按名称执行）</span></div>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">{{@copyright}}</div>
+    </footer>
+  </div>
+</body>
+</html>

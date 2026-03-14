@@ -1,0 +1,460 @@
+/* 地区建设 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  width: 100%;
+  min-width: 100%;
+  overflow-x: hidden;
+  background: #f5f5f5;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.area-container {
+  width: 100%;
+  min-width: 100%;
+  max-width: 100vw;
+  padding: 14px 16px 6px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ========== 顶部栏（复用 gacha-analysis 布局） ========== */
+.list-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background-image: url('../../img/短尺背景.png');
+  background-size: 100% 100%;
+  border-radius: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.list-top-bar .user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.list-top-bar .user-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  object-fit: cover;
+}
+
+.list-top-bar .user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list-top-bar .user-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.list-top-bar .user-uid {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.list-top-bar .list-header-middle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.list-top-bar .list-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 2px 0;
+}
+
+.list-top-bar .list-count {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.list-top-bar-logo {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  max-width: 100px;
+  overflow: hidden;
+}
+
+.logo-container .logo-image {
+  height: 46px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ========== 地区卡片 ========== */
+.zone-card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 18px 22px;
+  margin-bottom: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.zone-card:last-child {
+  margin-bottom: 0;
+}
+
+/* 地区背景图 */
+.zone-card.has-bg {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.zone-bg-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.zone-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.35);
+  z-index: 1;
+}
+
+/* 有背景图时，内容层提到最上面 */
+.zone-card.has-bg .zone-header,
+.zone-card.has-bg .settlement-list {
+  position: relative;
+  z-index: 2;
+}
+
+/* 有背景图时，标题栏独立底条 */
+.zone-card.has-bg .zone-header {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  margin: -18px -22px 0;
+  padding: 14px 22px;
+  border-radius: 10px 10px 0 0;
+  border-bottom: none;
+}
+
+
+/* 地区头部：左侧名称 + 右侧收集统计 */
+.zone-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.zone-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 地区 SVG 图标 */
+.zone-pin-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* SVG 加载失败时的文字回退 */
+.zone-pin-text {
+  font-size: 1.15rem;
+  color: #374151;
+}
+
+.zone-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.zone-level {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+/* 收集统计 */
+.zone-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.zone-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.88rem;
+  color: #000000;
+  white-space: nowrap;
+}
+
+/* 收集统计图标 */
+.zone-stat-icon {
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  object-fit: contain;
+  vertical-align: middle;
+  flex-shrink: 0;
+  background: #374151;
+  border-radius: 4px;
+  box-sizing: content-box;
+}
+
+.zone-stat b {
+  color: #374151;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+/* ========== 聚落列表 ========== */
+.settlement-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  padding-top: 14px;
+}
+
+.settlement-item {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #f0f0f0;
+}
+
+/* 聚落头部：名称 + 等级 */
+.settlement-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.settlement-name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.settlement-lv {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #fff;
+  background: #374151;
+  padding: 1px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+/* 派驻干员区域 */
+.settlement-officer-area {
+  min-height: 42px;
+}
+
+.officer-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 派驻干员头像 */
+.officer-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+/* 头像加载失败时隐藏 */
+.officer-card.no-avatar .officer-avatar {
+  display: none;
+}
+
+.officer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.officer-tag {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.officer-name {
+  font-size: 0.92rem;
+  color: #1f2937;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 未派驻状态 */
+.officer-empty {
+  justify-content: center;
+  gap: 6px;
+}
+
+.officer-empty-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d1d5db;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.officer-empty-text {
+  font-size: 0.82rem;
+  color: #d1d5db;
+}
+
+/* 调度券样式 */
+.settlement-ticket {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #e5e7eb;
+  position: relative;
+}
+
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ticket-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: bold;
+}
+
+.ticket-value {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #374151;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.ticket-bar {
+  width: 100%;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ticket-bar-fill {
+  height: 100%;
+  background: #6366f1;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* 满值样式 */
+.ticket-full .ticket-bar-fill {
+  background: #f59e0b;
+}
+
+.ticket-full .ticket-value {
+  color: #f59e0b;
+}
+
+.ticket-full-tag {
+  position: absolute;
+  top: 10px;
+  right: 0;
+  font-size: 0.65rem;
+  color: #fff;
+  background: #f59e0b;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+
+/* ========== 页脚 ========== */
+.footer {
+  text-align: center;
+  margin-top: 4px;
+  padding: 6px 0 0;
+}
+
+.footer-text {
+  font-size: 1.4rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.footer-text .version {
+  margin-left: 2px;
+  color: #007180;
+}

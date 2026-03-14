@@ -1,0 +1,395 @@
+/* 模拟抽卡结果 - 单抽/十连/批量，风格对齐 gacha-record */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f5f5f5;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  min-height: 100vh;
+  padding: 16px;
+  color: #1f2937;
+}
+
+.simulate-result-container {
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 760px;
+  position: relative;
+}
+
+.list-top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  background: #f9fafb;
+  border-radius: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.list-top-bar .list-header-middle {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.list-top-bar .list-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 4px 0;
+}
+
+.list-top-bar .list-count {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.list-top-bar-logo {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  max-width: 110px;
+  overflow: hidden;
+}
+
+.logo-container .logo-image {
+  height: 44px;
+  width: auto;
+  object-fit: contain;
+}
+
+.card-wrap {
+  background: #fff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.result-card.single .result-single-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.result-card.single .char-cover-wrap {
+  flex-shrink: 0;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.result-card.single .char-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.result-card.single .result-single-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-card.single .result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.result-card.single .char-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.result-card.single .result-meta {
+  font-size: 0.95rem;
+  color: #6b7280;
+}
+
+.result-card.single .pity {
+  color: #9ca3af;
+}
+
+.star {
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.star-6 { color: #f59e0b; }
+.star-5 { color: #a855f7; }
+.star-4 { color: #3b82f6; }
+
+.tag { font-size: 0.9rem; padding: 2px 8px; border-radius: 4px; }
+.tag.up { background: #d1fae5; color: #065f46; }
+.tag.wai { background: #fee2e2; color: #991b1b; }
+
+/* 十连：卡片网格展示（参考游戏抽卡结果） */
+.ten-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.ten-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111827;
+  aspect-ratio: 3 / 4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+.ten-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ten-card-top {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+
+.ten-card-idx {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.ten-card-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 10px 9px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0,0,0,0.65) 55%, rgba(0,0,0,0.78) 100%);
+  z-index: 2;
+}
+
+.ten-card-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}
+
+.ten-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ten-card-star {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.ten-card-tag {
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.ten-card-tag-up { background: rgba(16, 185, 129, 0.85); color: #052e1a; }
+.ten-card-tag-wai { background: rgba(239, 68, 68, 0.85); color: #2b0b0b; }
+
+/* 稀有度描边（可视化区分） */
+.ten-card-6 { outline: 2px solid rgba(245, 158, 11, 0.85); outline-offset: -2px; }
+.ten-card-5 { outline: 2px solid rgba(168, 85, 247, 0.85); outline-offset: -2px; }
+.ten-card-4 { outline: 2px solid rgba(59, 130, 246, 0.75); outline-offset: -2px; }
+.result-stats {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* 图二风格：保底进度面板 + 统计卡片 */
+.pity-panel {
+  margin-top: 14px;
+}
+
+.pity-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #111827;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pity-sub {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  letter-spacing: 0.06em;
+  font-weight: 800;
+}
+
+.pity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.92rem;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.pity-row-gap {
+  margin-top: 12px;
+}
+
+.pity-row-left {
+  color: #374151;
+  font-weight: 700;
+}
+
+.pity-row-right {
+  color: #111827;
+  font-weight: 800;
+}
+
+.pity-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+}
+
+.pity-bar-inner {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.pity-bar-six {
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 60%, #fde68a 100%);
+}
+
+.pity-bar-hard {
+  background: linear-gradient(90deg, #06b6d4 0%, #22c55e 100%);
+}
+
+.pity-prob {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.summary-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.summary-card {
+  padding: 16px 18px;
+}
+
+.summary-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: #111827;
+  line-height: 1;
+}
+
+.summary-sub {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.summary-value-six { color: #f59e0b; }
+.summary-value-five { color: #a855f7; }
+.summary-value-good { color: #16a34a; }
+
+.batch-summary {
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.batch-star6-covers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.batch-star6-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.char-cover-batch {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f3f4f6;
+}
+
+.batch-star6-label {
+  font-size: 0.8rem;
+  color: #6b7280;
+  max-width: 64px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.batch-pity {
+  font-size: 0.9rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.pity-item { margin-right: 4px; }

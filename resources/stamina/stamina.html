@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=850, initial-scale=1">
+  <title>理智查询</title>
+  <link rel="stylesheet" href="{{_res_path}}stamina/stamina.css">
+</head>
+
+<body>
+  <div class="stamina-container">
+    {{each accounts acc idx}}
+    <div class="stamina-card has-bg">
+      <img class="stamina-bg-img" src="{{acc.staminaBgImg}}" alt=""
+        onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
+      <div class="stamina-bg-overlay"></div>
+      {{if acc.operatorImg}}
+      <img class="stamina-operator-img" src="{{acc.operatorImg}}" alt="" onerror="this.style.display='none'">
+      {{/if}}
+
+      <!-- 顶部用户信息 -->
+      <div class="stamina-header">
+        <div class="user-info">
+          {{if acc.userAvatar}}
+          <img src="{{acc.userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+          {{/if}}
+          <div class="user-details">
+            <div class="user-name">{{acc.userName}}</div>
+            <div class="user-uid">Lv.{{acc.userLevel}} · UID {{acc.userUid}}</div>
+          </div>
+        </div>
+        {{if pluResPath}}
+        <div class="logo-container">
+          <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- 理智数据区 -->
+      <div class="stamina-body">
+        <div class="stamina-main">
+          <div class="stamina-circle">
+            <svg viewBox="0 0 120 120" class="stamina-ring">
+              <circle cx="60" cy="60" r="52" class="ring-bg" />
+              <circle cx="60" cy="60" r="52" class="ring-fill"
+                style="stroke-dasharray: {{acc.staminaPercent * 326.7}} 326.7; stroke-dashoffset: 0;"
+                transform="rotate(-90 60 60)" />
+            </svg>
+            <div class="stamina-circle-text">
+              <span class="stamina-current">{{acc.current}}</span>
+              <span class="stamina-divider">/</span>
+              <span class="stamina-max">{{acc.max}}</span>
+            </div>
+          </div>
+          <div class="stamina-label">理智</div>
+        </div>
+
+        <div class="stamina-info">
+          <div class="info-row">
+            <span class="info-label">回满时间</span>
+            <span class="info-value">{{acc.fullTime}}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">日常活跃</span>
+            <div class="activation-wrap">
+              <span class="info-value">{{acc.activation}}<span
+                  class="info-value-sub">/{{acc.maxActivation}}</span></span>
+              <div class="activation-bar">
+                <div class="activation-bar-fill" style="width: {{acc.activationPercent}}%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">{{@copyright}}</div>
+    </footer>
+  </div>
+</body>
+
+</html>

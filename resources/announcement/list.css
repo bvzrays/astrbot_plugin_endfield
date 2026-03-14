@@ -1,0 +1,148 @@
+/* 公告列表 - 参考米游社·原神公告列表版式：序号 + 标题 + 时间，下方缩略图 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  background: url("{{_res_path}}img/吊车.jpg") no-repeat center center fixed;
+  background-size: cover;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.announcement-list-container {
+  width: 100%;
+  min-width: 100%;
+  padding: 16px 20px 20px;
+  position: relative;
+}
+
+.list-top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: url("{{_res_path}}img/短尺背景.png") no-repeat center center;
+  background-size: cover;
+  border-radius: 12px;
+  position: relative;
+  z-index: 2;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.list-top-bar .list-header-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.list-top-bar .list-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1a1a2e;
+  margin: 0 0 4px 0;
+  letter-spacing: 0.02em;
+}
+
+.list-top-bar .list-count {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* 公告条目列表 */
+.announcement-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-item {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.announcement-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  min-height: 44px;
+}
+
+.announcement-num {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #9ca3af;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.announcement-title {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.announcement-time {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.announcement-thumb-wrap {
+  padding: 0 14px 12px;
+}
+
+.announcement-thumb {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  background: #f3f4f6;
+}
+
+/* 页脚：与 help 统一版式（居中、上边框、留白） */
+.announcement-list-container .footer {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.announcement-list-container .footer .copyright {
+  font-size: 1em;
+  color: #000000;
+}
+
+.announcement-list-container .footer .copyright .version {
+  color: #007180;
+  display: inline-block;
+  padding: 0 3px;
+}

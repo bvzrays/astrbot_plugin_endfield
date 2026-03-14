@@ -1,0 +1,156 @@
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Background and layout is applied to #help-wrapper because it is the first element 
+   Playwright screenshots instead of the body. */
+#help-wrapper {
+  font-family: 'HarmonyOS Sans SC', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background-image: url('../img/吊车.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: #000000;
+  padding: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Center vertically for 16:9 viewport */
+}
+
+/* 容器：半透明白底；左右留足内边距，避免命令网格右侧贴边 */
+.container {
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.90);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 40px 60px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(229, 231, 235, 0.4);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header h1 {
+  font-size: 2.8em;
+  color: #000000;
+  margin: 0 0 8px 0;
+}
+
+.header p {
+  font-size: 2em;
+  color: #000000;
+  margin: 0;
+}
+
+.info-block {
+  background-color: #f9fafb;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  font-size: 0.95em;
+  line-height: 1.5;
+  border: 1px solid #e5e7eb;
+}
+
+.tips-block .tips-title {
+  font-size: 2.2em;
+  font-weight: bold;
+  color: #ff0000;
+  margin-right: 6px;
+}
+
+.tips-block .tips-description {
+  font-size: 2em;
+  color: #000000;
+  line-height: 1.5;
+}
+
+.section-title {
+  font-size: 2.5em;
+  color: #000000;
+  margin-top: 35px;
+  margin-bottom: 18px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  letter-spacing: 0.5px;
+}
+
+/* 列数、列宽、间距由模板注入（help_layout），此处仅保留 display */
+.commands-grid {
+  display: grid;
+}
+
+.command-item {
+  background-color: #f9fafb;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+}
+
+.help-item-icon {
+  width: 50px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: 4px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.help-item-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.command-item .text-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.command-name {
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 4px;
+  font-size: 2em;
+}
+
+.command-description {
+  font-size: 1.5em;
+  color: #007180;
+  line-height: 1.4;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 页脚版权：支持 {{@copyright || sys?.copyright}}，自动适配不同 Yunzai */
+.copyright {
+  font-size: 2.2em;
+  color: #000000;
+}
+
+.copyright .version {
+  color: #007180;
+  display: inline-block;
+  padding: 0 3px;
+}

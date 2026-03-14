@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}gacha/gacha-analysis.css">
+</head>
+
+<body>
+  <div class="gacha-analysis-container">
+    <!-- 顶部栏 -->
+    <div class="top-bar">
+      <div class="user-info">
+        {% if userAvatar %}
+        <img src="{{userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+        {% endif %}
+        <div class="user-details">
+          <div class="user-name">{{userNickname}}</div>
+          <div class="user-uid">UID {{userUid}}</div>
+        </div>
+      </div>
+      <div class="top-bar-center">
+        <h1 class="top-title">{{title}}</h1>
+        <p class="top-sub">{{subtitle}}</p>
+      </div>
+      {% if pluResPath %}
+      <div class="top-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo">
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">{{totalCount}}</span>
+        <span class="stat-label">总抽数</span>
+      </div>
+      <div class="stat-item stat-6">
+        <span class="stat-num">{{star6}}</span>
+        <span class="stat-label">6星</span>
+      </div>
+      <div class="stat-item stat-5">
+        <span class="stat-num">{{star5}}</span>
+        <span class="stat-label">5星</span>
+      </div>
+      <div class="stat-item stat-4">
+        <span class="stat-num">{{star4}}</span>
+        <span class="stat-label">4星</span>
+      </div>
+    </div>
+
+    <!-- 时间 + 刷新提示 -->
+    <div class="time-bar">
+      <span class="analysis-time">{{analysisTime}}</span>
+      {% if syncHint %}<span class="sync-hint">{{syncHint}}</span>{% endif %}
+    </div>
+
+    <!-- 池组 -->
+    {% for group in poolGroups %}
+    <div class="pool-group">
+      <div class="pool-group-header">
+        <span class="pool-group-title">{{group.label}}</span>
+      </div>
+      {% if not group.pools or group.pools|length == 0 %}
+      <div class="pool-group-empty">暂无记录</div>
+      {% else %}
+      {% for pool in group.pools %}
+      <div class="pool-entry">
+        <div class="pool-entry-header">
+          <span class="pool-entry-name">{{pool.poolName}}</span>
+        </div>
+        <div class="pool-entry-metrics">
+          <span class="metric">{{pool.total}} 抽数</span>
+          <span class="metric">{{pool.metric1Label}} {{pool.metric1}}</span>
+          <span class="metric">{{pool.metric2Label}} {{pool.metric2}}</span>
+        </div>
+        {% if (pool.images and pool.images|length > 0) or (pool.pitySinceLast6 != none and pool.pitySinceLast6 > 0) or
+        pool.freeTotal > 0 %}
+        <div class="star6-list">
+          {% if pool.pitySinceLast6 != none and pool.pitySinceLast6 > 0 %}
+          <div class="star6-row pity-row">
+            <div class="star6-icon star6-icon-pity">?</div>
+            <div class="bar-wrap">
+              <div class="bar-inner bar-level-{{pool.pityBarColorLevel or 'green'}} bar-not-full"
+                style="width: {{pool.pityBarPercent or 0}}%;">
+                {% if pool.inheritedPity > 0 %}
+                <div class="bar-inherit-overlay" style="width: {{pool.inheritedPityPercent}}%;"></div>
+                {% endif %}
+                <span class="bar-text">已垫 {{pool.pitySinceLast6}}</span>
+              </div>
+            </div>
+            <span class="star6-tag star6-tag-empty"></span>
+          </div>
+          {% endif %}
+          {% if pool.images and pool.images|length > 0 %}
+          {% for img in pool.images %}
+          <div class="star6-row">
+            {% if img.url %}<img class="star6-icon" src="{{img.url}}" alt="{{img.name}}"
+              onerror="this.style.display='none'">{% else %}<div class="star6-icon star6-icon-free">×</div>{% endif %}
+            <div class="bar-wrap">
+              {% if img.refLinePercent != none %}<div class="bar-ref" style="left: {{img.refLinePercent}}%;"></div>{%
+              endif %}
+              <div
+                class="bar-inner bar-level-{{img.barColorLevel or 'green'}}{% if img.barPercent < 100 %} bar-not-full{% endif %}"
+                style="width: {{img.barPercent or 50}}%;">
+                <span class="bar-text">{{img.pullCount}}抽</span>
+              </div>
+            </div>
+            <span class="star6-tag star6-tag-{{img.badgeColor or 'normal'}}">{{img.tag or ''}}</span>
+          </div>
+          {% endfor %}
+          {% endif %}
+          {% if pool.freeTotal > 0 %}
+          <div class="star6-row free-row">
+            <div class="star6-icon star6-icon-free">×</div>
+            <div class="bar-wrap">
+              <div class="bar-inner bar-level-free bar-not-full" style="width: {{pool.freeBarPercent}}%;">
+                <span class="bar-text">免费 - {{pool.freeTotal}}抽</span>
+              </div>
+            </div>
+            <span class="star6-tag star6-tag-empty"></span>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">{{copyright|safe}}</div>
+    </footer>
+  </div>
+</body>
+
+</html>

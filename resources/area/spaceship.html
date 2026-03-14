@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}area/spaceship.css">
+</head>
+
+<body>
+  <div class="spaceship-container">
+    <!-- 顶部栏：左侧用户信息 + 中间标题 + 右侧 Logo -->
+    <div class="list-top-bar">
+      <div class="user-info">
+        {{if userAvatar}}
+        <img src="{{userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+        {{/if}}
+        <div class="user-details">
+          <div class="user-name">{{userNickname}}</div>
+          <div class="user-uid">Lv.{{userLevel}} · UID {{userUid}}</div>
+        </div>
+      </div>
+      <div class="list-header-middle">
+        <h1 class="list-title">{{title}}</h1>
+        <p class="list-count">共 {{roomCount}} 个房间</p>
+      </div>
+      {{if pluResPath}}
+      <div class="logo-container list-top-bar-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+      </div>
+      {{/if}}
+    </div>
+
+    <!-- 房间列表 -->
+    <div class="room-list">
+      {{each rooms room idx}}
+      <div class="room-card has-bg">
+        <img class="room-bg-img" src="{{pluResPath}}img/帝江号{{room.bgIndex}}.png" alt=""
+          onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
+        <div class="room-bg-overlay"></div>
+        <!-- 房间头部 -->
+        <div class="room-header">
+          <div class="room-title-group">
+            {{if pluResPath}}
+            <img class="room-icon" src="{{pluResPath}}img/帝江号.svg" alt="" onerror="this.style.display='none'">
+            {{/if}}
+            <span class="room-name">{{room.roomName}}</span>
+            <span class="room-level">Lv.{{room.level}}</span>
+          </div>
+          <div class="room-char-count">
+            {{if room.chars.length > 0}}
+            <span class="char-count-num">{{room.chars.length}}</span>
+            <span class="char-count-label">人派驻</span>
+            {{else}}
+            <span class="char-count-empty">无派驻</span>
+            {{/if}}
+          </div>
+        </div>
+
+        <!-- 派驻干员 -->
+        {{if room.chars.length > 0}}
+        <div class="char-list">
+          {{each room.chars c cIdx}}
+          <div class="char-card">
+            <div class="char-card-header">
+              {{if c.avatar}}
+              <img class="char-avatar" src="{{c.avatar}}" alt="{{c.name}}" onerror="this.style.display='none'">
+              {{/if}}
+              <div class="char-info">
+                <span class="char-tag">派驻干员</span>
+                <span class="char-name">{{c.name}}</span>
+              </div>
+            </div>
+            <div class="char-card-stats">
+              <div class="char-stat">
+                <span class="char-stat-label">心情</span>
+                <span class="char-stat-value">{{c.moodDisplay}}</span>
+              </div>
+              <div class="char-stat">
+                <span class="char-stat-label">信赖</span>
+                <span class="char-stat-value char-stat-fav" title="{{c.trustDisplay}}">
+                  <span class="char-stat-percent">{{c.trustPercent}}%</span>
+                  {{if c.trustLevelName}}
+                  <span class="trust-badge trust-{{c.trustLevelName}}">{{c.trustLevelName}}</span>
+                  {{/if}}
+                </span>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="room-empty">
+          <div class="room-empty-icon">＋</div>
+          <span class="room-empty-text">暂无干员派驻</span>
+        </div>
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">astrbot</div>
+    </footer>
+  </div>
+</body>
+
+</html>

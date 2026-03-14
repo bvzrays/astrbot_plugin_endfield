@@ -1,0 +1,247 @@
+/* MaaEnd 任务列表 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  width: 100%;
+  background: #f0f1f5;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.maa-container {
+  padding: 14px 16px 6px;
+}
+
+/* ========== 主卡片 ========== */
+.maa-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 20px 22px;
+  overflow: hidden;
+}
+
+/* ========== 设备信息头 ========== */
+.maa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.device-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.device-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.status {
+  font-size: 0.7rem;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.status-online  { background: #dcfce7; color: #15803d; }
+.status-offline { background: #fee2e2; color: #dc2626; }
+.status-busy    { background: #fef9c3; color: #a16207; }
+
+.device-ver {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.logo-wrap {
+  flex-shrink: 0;
+}
+
+.logo-image {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ========== 任务区段 ========== */
+.task-section {
+  margin-bottom: 14px;
+}
+
+.section-label {
+  font-size: 0.78rem;
+  color: #6b7280;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.empty-hint {
+  color: #9ca3af;
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 24px 0;
+}
+
+/* ========== 任务列表 ========== */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: border-color 0.15s;
+}
+
+.task-index {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: #6366f1;
+  color: #fff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: bold;
+  margin-top: 1px;
+}
+
+.task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #111827;
+  font-family: 'Consolas', 'Monaco', 'Menlo', monospace;
+}
+
+.task-label {
+  font-size: 0.75rem;
+  color: #6366f1;
+  background: #eef2ff;
+  padding: 1px 8px;
+  border-radius: 6px;
+}
+
+.task-desc {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* 任务选项 */
+.task-option {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  margin-top: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.opt-key {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.opt-cases {
+  font-family: 'Consolas', monospace;
+  font-size: 0.68rem;
+  word-break: break-all;
+}
+
+/* ========== 环境信息 ========== */
+.env-section {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  margin-bottom: 12px;
+}
+
+.env-tag {
+  font-size: 0.7rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+/* ========== 使用提示 ========== */
+.hint-section {
+  padding: 10px 14px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hint-text {
+  font-size: 0.78rem;
+  color: #4338ca;
+  font-weight: bold;
+  font-family: 'Consolas', monospace;
+}
+
+.hint-sub {
+  font-weight: normal;
+  color: #818cf8;
+  font-family: 'HarmonyOS Sans SC', sans-serif;
+  margin-left: 4px;
+}
+
+/* ========== 页脚 ========== */
+.footer {
+  text-align: center;
+  margin-top: 8px;
+  padding: 6px 0 0;
+}
+
+.footer-text {
+  font-size: 1.4rem;
+  color: #9ca3af;
+  line-height: 1.4;
+}
+
+.footer-text .version {
+  color: #007180;
+}

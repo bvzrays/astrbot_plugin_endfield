@@ -1,0 +1,207 @@
+/* 成就查询 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 850px;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 850px;
+  overflow-x: hidden;
+  background: #f5f5f5;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+  margin: 0;
+  padding: 0;
+}
+
+.achievement-container {
+  width: 100%;
+  padding: 14px 16px 6px;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.achievement-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.achievement-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: #fff;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  border: 2px solid #f3f4f6;
+  object-fit: cover;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.user-uid {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.achievement-stats {
+  display: flex;
+  gap: 24px;
+  margin-right: auto;
+  margin-left: 40px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #6366f1;
+}
+
+.logo-image {
+  height: 36px;
+  opacity: 0.8;
+}
+
+.achievement-body {
+  padding: 24px;
+  background: #fafafa;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.medal-item {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.medal-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.medal-item.plated {
+  border-left: 4px solid #f59e0b;
+}
+
+.medal-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.medal-placeholder {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #9ca3af;
+}
+
+.medal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.medal-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #374151;
+}
+
+.medal-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.medal-level {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.medal-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.footer {
+  text-align: center;
+  padding: 10px 0;
+}
+
+.footer-text {
+  font-size: 1.2rem;
+  color: #9ca3af;
+}

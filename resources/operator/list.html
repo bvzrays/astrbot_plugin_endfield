@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width={{listPageWidth}}, initial-scale=1">
+    <title>干员列表 - 终末地</title>
+    <link rel="stylesheet" href="{{pluResPath}}operator/list.css">
+    {% if listBgFile %}
+    <style>
+        .list-page-body {
+            background-image: url({{pluResPath}}operator/img/{{listBgFile}});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+    {% endif %}
+</head>
+
+<body class="list-page-body" data-list-page-width="{{listPageWidth}}" data-list-content-width="{{listContentWidth}}"
+    data-list-column-count="{{listColumnCount}}" data-list-card-width-px="{{listCardWidthPx}}"
+    data-list-gap-px="{{listGapPx}}">
+    <div class="operator-list-container">
+        <header class="list-top-bar">
+            <div class="list-top-bar-left">
+                <img src="{{userAvatar}}" alt="用户头像" class="user-avatar">
+                <div class="user-details">
+                    <span class="user-name">{{userNickname}}</span>
+                    <span class="user-level">Lv.{{userLevel}}</span>
+                </div>
+            </div>
+            <div class="list-top-bar-center">
+                <h1 class="list-title">干员列表</h1>
+                <p class="list-subtitle">共 {{totalCount}} 个干员</p>
+            </div>
+            <div class="list-top-bar-right">
+                <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+            </div>
+        </header>
+
+        <div class="operators-grid" style="--list-card-scale: {{listCardScale}};">
+            {% for operator in operators %}
+            <div class="operator-card" data-rarity="{{operator.rarity}}"
+                data-friend-showcase="{% if operator.isFriendShowcase %}1{% else %}0{% endif %}"
+                style="--list-card-scale: {{listCardScale}}; width: {{listCardWidthPx}}px;">
+                <div class="showcase-inner showcase-container" data-color-code="{{operator.colorCode}}">
+                    {% if operator.rarity >= 4 %}
+                    <div class="card-rarity-badge card-rarity-{{operator.rarity}}">
+                        <img class="card-rarity-star-img" src="{{pluResPath}}meta/potential/star.png" alt="">
+                        <span class="card-rarity-num">{{operator.rarity}}</span>
+                    </div>
+                    {% endif %}
+                    <div class="background-character">
+                        <img src="{{operator.imageUrl}}" alt="character">
+                    </div>
+                    <div class="left-triangles">
+                        <svg class="triangle-vector-2" viewBox="0 0 172.5 680.5" preserveAspectRatio="none">
+                            <path d="M172.5 0l-172.5 0 0 680.5 172.5-680.5z" />
+                        </svg>
+                        <svg class="triangle-vector-1" viewBox="0 0 235.5 1186" preserveAspectRatio="none">
+                            <path d="M235.5 1186l-235.5-1186 0 1186 235.5 0z" />
+                        </svg>
+                    </div>
+                    <div class="card-icons">
+                        {% if operator.professionIcon %}
+                        <div class="decoration-image">
+                            <img src="{{operator.professionIcon}}" alt="{{operator.profession}}">
+                        </div>
+                        {% endif %}
+                        {% if operator.propertyIcon %}
+                        <div class="property-icon">
+                            <img src="{{operator.propertyIcon}}" alt="{{operator.property}}">
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="vertical-title-container">
+                        {% for ch in operator.nameChars %}
+                        <span class="vertical-title-char">{{ch}}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="card-potential-wrap">
+                        <span class="card-potential-text">潜{{operator.potentialLevel}}</span>
+                    </div>
+                    {% if operator.phaseIcon %}
+                    <div class="card-phase-potential">
+                        <img src="{{operator.phaseIcon}}" alt="精英{{operator.evolvePhase}}" class="card-phase-icon">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        (function () {
+            const palette = {
+                PHY: { hex: '#888888', opaque: '#888888', semi: 'rgba(136,136,136,0.5)' },
+                FIRE: { hex: '#FF623D', opaque: '#FF623D', semi: 'rgba(255,98,61,0.5)' },
+                ELEC: { hex: '#FFC000', opaque: '#FFC000', semi: 'rgba(255,192,0,0.5)' },
+                ICE: { hex: '#21C6D0', opaque: '#21C6D0', semi: 'rgba(33,198,208,0.5)' },
+                NATURE: { hex: '#9EDC23', opaque: '#9EDC23', semi: 'rgba(158,220,35,0.5)' }
+            };
+
+            document.querySelectorAll('.showcase-container').forEach(function (container) {
+                const code = (container.dataset.colorCode || 'PHY').toUpperCase();
+                const entry = palette[code] || palette.PHY;
+                const isFriendShowcase = container.closest('.operator-card')?.dataset?.friendShowcase === '1';
+                container.style.setProperty('--tri1-color', entry.opaque);
+                container.style.setProperty('--tri2-color', entry.semi);
+                if (!isFriendShowcase) {
+                    container.style.setProperty('--border-color', entry.opaque);
+                    container.style.setProperty('--stroke-color', entry.opaque);
+                }
+                container.style.setProperty('--title-color', container.dataset.titleColor || '#ffffff');
+                container.style.setProperty('--base-hex', entry.hex);
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const body = document.querySelector('body.list-page-body');
+            const container = document.querySelector('.operator-list-container');
+            const grid = document.querySelector('.operators-grid');
+            if (!body) return;
+
+            const listPageWidth = Number(body.dataset.listPageWidth || 0);
+            const listContentWidth = Number(body.dataset.listContentWidth || 0);
+            const listColumnCount = Number(body.dataset.listColumnCount || 0);
+            const listCardWidthPx = Number(body.dataset.listCardWidthPx || 0);
+            const listGapPx = Number(body.dataset.listGapPx || 0);
+
+            if (listPageWidth > 0) {
+                body.style.width = listPageWidth + 'px';
+                body.style.maxWidth = listPageWidth + 'px';
+                body.style.margin = '0 auto';
+                body.style.overflowX = 'hidden';
+                if (container) {
+                    container.style.width = listPageWidth + 'px';
+                    container.style.maxWidth = listPageWidth + 'px';
+                }
+            }
+
+            if (grid && listContentWidth > 0 && listColumnCount > 0 && listCardWidthPx > 0) {
+                grid.style.width = listContentWidth + 'px';
+                grid.style.gridTemplateColumns = `repeat(${listColumnCount}, ${listCardWidthPx}px)`;
+                if (listGapPx >= 0) grid.style.gap = listGapPx + 'px';
+            }
+        })();
+    </script>
+</body>
+
+</html>
