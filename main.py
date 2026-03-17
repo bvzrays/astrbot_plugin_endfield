@@ -2071,7 +2071,7 @@ class EndfieldPlugin(Star):
         user_id = event.get_sender_id()
         binding = await self.user_mgr.get_primary_binding(user_id)
         if not binding:
-            yield event.plain_result("未绑定账号。请先使用 /终末地扫码登录。")
+            yield event.plain_result("未绑定账号。请先使用 /zmd 查看绑定。")
             return
 
         token = binding.get("framework_token")
