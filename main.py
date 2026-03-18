@@ -2188,7 +2188,7 @@ class EndfieldPlugin(Star):
         # Calculate cross-banner shared pity for limited pools
         # Sort chronologically: oldest first
         limited_sorted = sorted(
-            limited_records, key=lambda x: str(x.get("seq_id", "")), reverse=False
+            limited_records, key=lambda x: int(x.get("seq_id", 0) or 0), reverse=False
         )
         shared_pity_count = 0
         seq_id_to_pity = {}
@@ -2439,7 +2439,7 @@ class EndfieldPlugin(Star):
         free = [r for r in records if r.get("is_free")]
 
         # Sort asc to calculate pity
-        normal.sort(key=lambda x: str(x.get("seq_id", "")), reverse=False)
+        normal.sort(key=lambda x: int(x.get("seq_id", 0) or 0), reverse=False)
 
         images = []
         pity_count = 0
@@ -2511,7 +2511,7 @@ class EndfieldPlugin(Star):
         has_free_6 = False
         free_pity_count = 0
         if free:
-            free.sort(key=lambda x: str(x.get("seq_id", "")), reverse=False)
+            free.sort(key=lambda x: int(x.get("seq_id", 0) or 0), reverse=False)
             for r in free:
                 free_pity_count += 1
                 if int(r.get("rarity", 0)) == 6:
