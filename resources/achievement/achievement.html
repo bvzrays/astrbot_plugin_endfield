@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=850, initial-scale=1">
+  <title>成就查询</title>
+  <link rel="stylesheet" href="{{_res_path}}achievement/achievement.css">
+</head>
+
+<body>
+  <div class="achievement-container">
+    <div class="achievement-card">
+      <!-- 顶部用户信息 -->
+      <div class="achievement-header">
+        <div class="user-info">
+          {{if userAvatar}}
+          <img src="{{userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+          {{/if}}
+          <div class="user-details">
+            <div class="user-name">{{userName}}</div>
+            <div class="user-uid">Lv.{{userLevel}} · UID {{userUid}}</div>
+          </div>
+        </div>
+        <div class="achievement-stats">
+          <div class="stat-item">
+            <span class="stat-label">成就总数</span>
+            <span class="stat-value">{{achieveCount}}</span>
+          </div>
+        </div>
+        {{if pluResPath}}
+        <div class="logo-container">
+          <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+        </div>
+        {{/if}}
+      </div>
+
+      <!-- 成就列表 -->
+      <div class="achievement-body">
+        <div class="achievement-grid">
+          {{each medals medal idx}}
+          <div class="medal-item {{if medal.isPlated}}plated{{/if}}">
+            <div class="medal-icon-wrap">
+              {{if medal.icon}}
+              <img src="{{medal.icon}}" alt="{{medal.name}}" class="medal-icon" onerror="this.style.display='none'">
+              {{else}}
+              <div class="medal-placeholder">{{medal.initial}}</div>
+              {{/if}}
+            </div>
+            <div class="medal-info">
+              <div class="medal-name">{{medal.name}}</div>
+              <div class="medal-meta">
+                <span class="medal-level">等级 {{medal.level}}</span>
+                <span class="medal-date">{{medal.date}}</span>
+              </div>
+            </div>
+          </div>
+          {{/each}}
+        </div>
+      </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">{{@copyright}}</div>
+    </footer>
+  </div>
+</body>
+
+</html>

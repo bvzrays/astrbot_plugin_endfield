@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1000, initial-scale=1">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{pluResPath}}note/note.css">
+  <!-- Backgrounds: inlined by _inline_assets before Jinja2 runs -->
+  <style>
+    /* Page bg is on note-container so it appears in Playwright's clip rect */
+    .note-container {
+      background-image: url({{pluResPath}}img/帝江号2.png);
+      background-size: cover;
+      background-position: center top;
+      background-repeat: no-repeat;
+    }
+    .note-progress-panel {
+      background-image: url({{pluResPath}}img/吊车.jpg);
+      background-size: cover;
+      background-position: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="note-container">
+    <!-- Top yellow banner -->
+    <div class="note-banner"># ARKNIGHTS: ENDFIELD</div>
+
+    <!-- Header: avatar + name + meta, logo right -->
+    <header class="note-header">
+      <div class="note-header-left">
+        {% if base.avatarUrl %}
+        <img src="{{base.avatarUrl}}" alt="" class="note-avatar" onerror="this.style.display='none'">
+        {% endif %}
+        <div class="note-header-info">
+          <h1 class="note-name">{{base.name}}</h1>
+          <div class="note-meta">
+            <span>UID {{base.roleId}}</span>
+            <span class="note-meta-sep">·</span>
+            <span>服务器 {{base.serverName or '--'}}</span>
+            {% if base.lastOnlineStr %}
+            <span class="note-meta-sep">·</span>
+            <span>上次在线 {{base.lastOnlineStr}}</span>
+            {% endif %}
+            {% if base.createTimeStr %}
+            <span class="note-meta-sep">·</span>
+            <span>创建 {{base.createTimeStr}}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% if pluResPath %}
+      <div class="note-header-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+      </div>
+      {% endif %}
+    </header>
+
+    <!-- Stats: 使命纪事 spans 2 rows on left; 3+3 small cards fill right -->
+    <div class="note-stats-grid">
+      <!-- Mission card: row-span 2 -->
+      <div class="note-stat-card note-stat-mission">
+        <div class="stat-mission-val">{{base.mainMissionDesc or '自由开拓'}}</div>
+        <div class="stat-mission-label">使命纪事</div>
+      </div>
+      <!-- Right column top row: 权限等阶 / 探索等级 / 干员 -->
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{base.level}}</div>
+        <div class="stat-small-label">权限等阶</div>
+      </div>
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{base.worldLevel}}</div>
+        <div class="stat-small-label">探索等级</div>
+      </div>
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{stats.charNum}}</div>
+        <div class="stat-small-label">干员</div>
+      </div>
+      <!-- Right column bottom row: 武器 / 档案 / 成就奖章 -->
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{stats.weaponNum}}</div>
+        <div class="stat-small-label">武器</div>
+      </div>
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{stats.docNum}}</div>
+        <div class="stat-small-label">档案</div>
+      </div>
+      <div class="note-stat-card">
+        <div class="stat-big-num">{{stats.achieveCount}}</div>
+        <div class="stat-small-label">成就奖章</div>
+      </div>
+    </div>
+
+    <!-- Two columns: progress (left) + medals (right) -->
+    <div class="note-mid-section">
+      <!-- Progress panel: bg is 吊车.jpg via <style> above -->
+      <div class="note-progress-panel">
+        <div class="progress-panel-overlay"></div>
+        <div class="progress-panel-content">
+          <div class="note-section-title">进度与活跃</div>
+          <div class="progress-item">
+            <div class="progress-label">日常活跃</div>
+            <div class="progress-val">{{stats.activation}}/{{stats.maxActivation}}</div>
+            <div class="progress-bar progress-bar-orange"><span class="progress-fill" style="width: {{ stats.progressDailyPct | default(0) }}%"></span></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label">周常积分</div>
+            <div class="progress-val">{{stats.weeklyScore or '0'}}/{{stats.weeklyMax or '10'}}</div>
+            <div class="progress-bar progress-bar-blue"><span class="progress-fill" style="width: {{ stats.progressWeeklyPct | default(0) }}%"></span></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label">通行证</div>
+            <div class="progress-val">{{stats.bpLevel}}/{{stats.bpMax}}</div>
+            <div class="progress-bar progress-bar-blue"><span class="progress-fill" style="width: {{ stats.progressBpPct | default(0) }}%"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medals panel: random medal bg -->
+      <div class="note-medals-panel"{% if medalPanelBg %} style="background-image: url('{{ medalPanelBg | safe }}');"{% endif %}>
+        <div class="module-overlay"></div>
+        <div class="module-content">
+          <div class="note-section-title">成就奖章</div>
+          <div class="medals-display-count">展示 {{achievements | length}}/10</div>
+          <div class="medals-grid">
+            {% for medal in achievements %}
+            <div class="medal-item">
+              <div class="medal-hexagon-wrap">
+                <div class="medal-hexagon {% if medal.isPlated %}is-plated{% endif %}">
+                  {% if medal.icon %}
+                  <img src="{{medal.icon}}" alt="" class="medal-icon" onerror="this.style.display='none'">
+                  {% else %}
+                  <span class="medal-initial">{{medal.initial}}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <span class="medal-name">{{medal.name}}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom: 干员速览 -->
+    <div class="note-chars-section"{% if charsPanelBg %} style="background-image: url('{{ charsPanelBg | safe }}');"{% endif %}>
+      <div class="module-overlay module-overlay-chars"></div>
+      <div class="module-content">
+        <div class="note-section-title">干员速览</div>
+        <div class="chars-summary">共 {{charNum}} 个{% if stats.teamCount is defined and stats.teamCount is not none and stats.teamCount != '' %}, 编队 {{stats.teamCount}} 个{% endif %}, 展示 {{charNum}} 个</div>
+        {% if chars and (chars | length) > 0 %}
+        <div class="note-chars-grid">
+          {% for char in chars %}
+          <div class="note-char-card" data-rarity="{{char.star or 4}}">
+            <div class="char-card-inner">
+              <!-- Character image -->
+              <div class="char-img-wrap">
+                {% if char.sqUrl %}
+                <img src="{{char.sqUrl}}" alt="" class="char-img" onerror="this.style.display='none'">
+                {% endif %}
+                <!-- Level badge -->
+                {% if char.level is defined and char.level is not none %}
+                <div class="char-level-badge">Lv.{{char.level}}</div>
+                {% endif %}
+              </div>
+              <!-- Bottom: name + star -->
+              <div class="char-card-footer">
+                <span class="char-name">{{char.name}}</span>
+                <span class="char-star">{{char.star or '--'}}★</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="note-empty">暂无干员</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

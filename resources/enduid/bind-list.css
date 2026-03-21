@@ -1,0 +1,289 @@
+/* 绑定列表 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 520px;
+  overflow-x: hidden;
+  background: #f5f5f5;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.bind-list-container {
+  width: 520px;
+  padding: 14px 16px 6px;
+  position: relative;
+}
+
+/* ========== 顶部栏 ========== */
+.list-top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-radius: 10px;
+  position: relative;
+  z-index: 2;
+}
+
+.list-top-bar .list-header-middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.list-top-bar .list-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin: 0 0 2px 0;
+}
+
+.list-top-bar .list-count {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.list-top-bar-logo {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  max-width: 100px;
+  overflow: hidden;
+}
+
+.logo-container .logo-image {
+  height: 46px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+/* ========== 绑定卡片 ========== */
+.bind-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  padding: 16px 20px;
+  margin-bottom: 12px;
+}
+
+.bind-card:last-of-type {
+  margin-bottom: 0;
+}
+
+/* 当前激活卡片 */
+.bind-card-active {
+  border-color: #007180;
+  background: linear-gradient(135deg, #f0fdfa 0%, #fff 100%);
+}
+
+/* 左侧头像区域 */
+.bind-card-left {
+  flex-shrink: 0;
+}
+
+.bind-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.bind-card-active .bind-avatar {
+  border-color: #007180;
+}
+
+.bind-avatar-fallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #9ca3af;
+}
+
+.bind-card-active .bind-avatar-fallback {
+  background: #e0f7f5;
+  border-color: #007180;
+  color: #007180;
+}
+
+/* 右侧信息区域 */
+.bind-card-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 顶部：序号 + 昵称 + 等级 + 标签 */
+.bind-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bind-index {
+  font-size: 0.88rem;
+  font-weight: bold;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.bind-nickname {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bind-level {
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bind-primary-tag {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: #007180;
+  background: #e0f7f5;
+  padding: 2px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+/* 中间信息行 */
+.bind-card-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.bind-info-sep {
+  color: #d1d5db;
+}
+
+/* ========== 未绑定空状态卡片 ========== */
+.bind-card-empty {
+  border-style: dashed;
+  border-color: #d1d5db;
+  background: #fafafa;
+}
+
+.bind-avatar-empty {
+  background: #f0f0f0;
+  border-style: dashed;
+  border-color: #d1d5db;
+  color: #c0c4cc;
+}
+
+.bind-empty-title {
+  color: #9ca3af !important;
+  font-size: 1.05rem;
+}
+
+.bind-empty-hint {
+  color: #b0b6c0 !important;
+  font-size: 0.82rem;
+}
+
+/* ========== 帮助提示 ========== */
+.tips-card {
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 16px;
+  margin-top: 12px;
+}
+
+.tips-title {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: #6b7280;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tips-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 3px 0;
+  font-size: 0.8rem;
+}
+
+.tips-cmd {
+  color: #007180;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tips-desc {
+  color: #424242;
+}
+
+/* ========== 页脚 ========== */
+.footer {
+  text-align: center;
+  margin-top: 4px;
+  padding: 6px 0 0;
+}
+
+.footer-text {
+  font-size: 0.7rem;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.footer-text .version {
+  margin-left: 2px;
+  color: #007180;
+}

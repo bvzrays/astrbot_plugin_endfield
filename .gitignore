@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+data/
+render_cache/
+resources/cache/
+.DS_Store
+.idea/
+.vscode/
+venv/
+error*.log
+render_*.html
+*.tmp

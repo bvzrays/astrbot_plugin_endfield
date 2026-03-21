@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  {% set contentWidth = 1280 %}
+  {% set colCount = 3 %}
+  {% set colWidth = 380 %}
+  {% set widthGap = 24 %}
+  <meta name="viewport" content="width={{contentWidth}}, initial-scale=1.0">
+  <title>{{helpCfg.title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}help/help.css">
+  <style>
+    html, body { margin: 0; padding: 0; background: transparent; }
+    #help-wrapper {
+      min-height: 720px;
+      box-sizing: border-box;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="help-wrapper" class="bg-layer" style="width: {{contentWidth}}px; max-width: {{contentWidth}}px;">
+    <main class="container" style="width:100%;max-width:{{contentWidth - 120}}px;box-sizing:border-box;">
+      <header class="header">
+        <h1>{{helpCfg.title}}</h1>
+        <p class="header-sub">{{helpCfg.subTitle}}</p>
+      </header>
+
+      {% for group in helpGroup %}
+      {% if group.type == 'tips' and group.tipItems %}
+      {% for item in group.tipItems %}
+      <div class="info-block tips-block">
+        <span class="tips-title">{{item.title}}</span>
+        <span class="tips-description">{{item.text}}</span>
+      </div>
+      {% endfor %}
+      {% elif group.group and not group.list %}
+      <div class="info-block">{{group.group}}</div>
+      {% elif group.list %}
+      <section class="help-section">
+        <h2 class="section-title">{{group.group}}</h2>
+        <div class="commands-grid">
+          {% for cmd in group.list %}
+          <article class="command-item">
+            {% if cmd.icon %}
+            <div class="help-item-icon"><img src="{{pluResPath}}help/img/icon.png" alt=""></div>
+            {% endif %}
+            <div class="text-content">
+              <div class="command-name">{{cmd.title}}</div>
+              <div class="command-description">{{cmd.desc}}</div>
+            </div>
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+      {% endfor %}
+
+      <footer class="footer">
+        <div class="copyright">{{copyright}}</div>
+      </footer>
+    </main>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,898 @@
+/* ── 字体 ── */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+/* ── 变量 ── */
+:root {
+  --card-bg: rgba(255, 255, 255, 0.82);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+  --accent: #f59e0b;
+  --text: #1f2937;
+  --subtext: #6b7280;
+  --font: 'HarmonyOS Sans SC', -apple-system, 'Microsoft YaHei', sans-serif;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 1100px;
+  font-family: var(--font);
+  background: transparent;
+  color: var(--text);
+  overflow: visible;
+}
+
+#container {
+  position: relative;
+  width: 100%;
+  min-height: 900px;
+  overflow: visible;
+}
+
+/* ── 背景 ── */
+.page-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.page-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(241, 245, 249, 0.88) 0%, rgba(248, 250, 252, 0.82) 100%);
+  z-index: 1;
+  border-radius: 18px;
+}
+
+/* ── 主布局：左立绘 + 右信息 ── */
+.main-layout {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 900px;
+  gap: 0;
+}
+
+/* ── 左侧立绘列 ── */
+.illust-col {
+  width: 380px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px 0 0 18px;
+}
+
+.illust-col::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, transparent 60%, rgba(248, 250, 252, 0.6) 100%);
+  pointer-events: none;
+}
+
+.illust-img {
+  width: 100%;
+  height: 100%;
+  min-height: 900px;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+}
+
+/* ── 右侧信息列 ── */
+.info-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 24px 20px 20px;
+  min-width: 0;
+}
+
+/* ── 通用卡片 ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 18px 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--text);
+  border-left: 5px solid #1f2937;
+  padding-left: 10px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--subtext);
+  letter-spacing: 1px;
+}
+
+/* ── ① 头部卡片 ── */
+.header-card {
+  padding: 18px 20px 14px;
+}
+
+.user-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--card-border);
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-lv {
+  font-size: 13px;
+  color: var(--subtext);
+  background: #f1f5f9;
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+
+.char-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.phase-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.char-name {
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  flex: 1;
+}
+
+.char-level-badge {
+  background: linear-gradient(135deg, #1f2937, #374151);
+  color: #f9fafb;
+  border-radius: 10px;
+  padding: 4px 14px;
+  font-size: 13px;
+  white-space: nowrap;
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.char-level-badge strong {
+  font-size: 18px;
+  margin-left: 2px;
+}
+
+.char-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.stars-row {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.star-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.tag-badge {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.tag-element {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+}
+
+.tag-weapon {
+  background: rgba(107, 114, 128, 0.1);
+  border-color: rgba(107, 114, 128, 0.2);
+  color: #374151;
+}
+
+.tag-skill {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.25);
+  color: #92400e;
+}
+
+.potential-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 10px;
+}
+
+.potential-label {
+  font-size: 12px;
+  color: var(--subtext);
+  margin-right: 4px;
+}
+
+.potential-dot {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  opacity: 0.2;
+}
+
+.potential-dot.filled {
+  opacity: 1;
+  filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5));
+}
+
+/* ── ①-B 属性区 ── */
+.attributes-card {
+  padding: 14px 20px;
+}
+
+.attr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 15px;
+}
+
+.attr-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+.attr-item.main-stat {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.attr-label {
+  font-size: 13px;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+.attr-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.main-stat .attr-value {
+  color: #c2410c;
+  font-size: 17px;
+}
+
+.attr-sync-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #a16207;
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-left: auto;
+  letter-spacing: 0;
+}
+
+/* ── ②-B 天赋与技术 ── */
+/* 技能 SKILLS（API (4) charData.skills + iconUrl） */
+.skills-card {
+  padding-bottom: 14px;
+}
+
+.skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.skill-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  min-width: 72px;
+}
+
+.skill-item.empty .skill-icon-wrap {
+  background: #f1f5f9;
+  border: 1px dashed #e2e8f0;
+}
+
+.skill-icon-wrap {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.skill-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.skill-empty-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 18px;
+  color: #94a3b8;
+}
+
+.skill-name {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.skill-rank {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 6px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.node-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.node-label {
+  font-size: 10px;
+  color: var(--subtext);
+}
+
+.node-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── ② 技能区 ── */
+.skills-card {
+  padding-bottom: 14px;
+}
+
+.skills-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.skill-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  width: 90px;
+}
+
+.skill-type-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: #374151;
+  width: 100%;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Color-code skill types */
+.skill-type-skill_type_normal_attack {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.skill-type-skill_type_normal_skill {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.skill-type-skill_type_combo_skill {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.skill-type-skill_type_ultimate_skill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.skill-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+  border: 2px solid #e2e8f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.skill-img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+  filter: brightness(0.95) contrast(1.1);
+}
+
+.skill-rank {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #374151, #1f2937);
+  color: #f3f4f6;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: center;
+  max-width: 90px;
+  line-height: 1.3;
+  margin-top: 4px;
+}
+
+.skill-item.empty .skill-icon-wrap {
+  opacity: 0.32;
+}
+
+.empty-mark {
+  font-size: 22px;
+  color: #9ca3af;
+}
+
+/* ── ③ 武器卡片 ── */
+.weapon-card {
+  padding-bottom: 14px;
+}
+
+.weapon-body {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.weapon-info {
+  flex: 1;
+}
+
+.weapon-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.weapon-level-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.weapon-lv-num {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.weapon-lv-label {
+  font-size: 12px;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+.weapon-break-badge,
+.weapon-refine-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.weapon-refine-badge {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+.weapon-stars {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.weapon-star {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.weapon-passives {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.weapon-passive-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.weapon-gem {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.gem-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gem-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.gem-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gem-skills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.gem-skills-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  margin-right: 2px;
+}
+
+.gem-skill-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  color: #6d28d9;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.gem-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.gem-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.gem-rarity {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 11px;
+  color: #d97706;
+}
+
+.gem-star {
+  width: 10px;
+  height: 10px;
+  object-fit: contain;
+}
+
+.weapon-img-wrap {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 160px;
+}
+
+.weapon-img {
+  max-height: 150px;
+  max-width: 160px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+/* ── ④ 装备区 ── */
+.equip-card-section {
+  padding-bottom: 14px;
+}
+
+.equip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 10px;
+}
+
+.equip-item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.equip-img-wrap {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.equip-img {
+  max-width: 58px;
+  max-height: 58px;
+  object-fit: contain;
+}
+
+.equip-detail {
+  flex: 1;
+  min-width: 0;
+}
+
+.equip-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.equip-lv-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+
+.equip-lv {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.equip-lv-label {
+  font-size: 10px;
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+.equip-stars-row {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.equip-star {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+}
+
+.equip-suit-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.suit-name {
+  font-size: 10px;
+  color: #7c3aed;
+  font-weight: 600;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.suit-count {
+  font-size: 10px;
+  color: #d97706;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 700;
+}
+
+/* 战术道具 */
+.tactical-item {
+  border-left: 3px solid var(--accent);
+}
+
+.tactical-tag {
+  display: inline-block;
+  font-size: 10px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.tactical-effect {
+  font-size: 11px;
+  color: var(--subtext);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* 空格 */
+.empty-slot {
+  opacity: 0.45;
+}
+
+.empty-img {
+  font-size: 14px;
+  color: var(--subtext);
+}
+
+.empty-name {
+  color: var(--subtext);
+  font-weight: 500;
+}
+
+/* ── ⑤ 页脚 ── */
+.footer {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.07);
+  margin-top: 4px;
+}
+
+.copyright {
+  font-size: 12px;
+  color: var(--subtext);
+  letter-spacing: 0.5px;
+}

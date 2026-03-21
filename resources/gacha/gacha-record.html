@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}gacha/gacha-record.css">
+</head>
+<body>
+  <div class="gacha-container">
+    <!-- 顶部栏：左侧用户信息 + 中间标题 + 右侧 Logo -->
+    <div class="top-bar">
+      <div class="user-info">
+        {{if userAvatar}}
+        <img src="{{userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+        {{/if}}
+        <div class="user-details">
+          <div class="user-name">{{userNickname}}</div>
+          <div class="user-uid">Lv.{{userLevel}} · UID {{userUid}}</div>
+        </div>
+      </div>
+      <div class="top-bar-center">
+        <h1 class="top-title">{{title}}</h1>
+        <p class="top-sub">共 {{totalCount}} 抽</p>
+      </div>
+      {{if pluResPath}}
+      <div class="top-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo">
+      </div>
+      {{/if}}
+    </div>
+
+    <!-- 统计概览 -->
+    <div class="stats-row">
+      <div class="stat-item">
+        <span class="stat-num">{{totalCount}}</span>
+        <span class="stat-label">总抽数</span>
+      </div>
+      <div class="stat-item stat-6">
+        <span class="stat-num">{{star6}}</span>
+        <span class="stat-label">6星</span>
+      </div>
+      <div class="stat-item stat-5">
+        <span class="stat-num">{{star5}}</span>
+        <span class="stat-label">5星</span>
+      </div>
+      <div class="stat-item stat-4">
+        <span class="stat-num">{{star4}}</span>
+        <span class="stat-label">4星</span>
+      </div>
+    </div>
+
+    <!-- 各卡池记录 2x2 -->
+    <div class="pool-grid">
+      {{each poolSections sec secIdx}}
+      <div class="pool-section">
+      <div class="pool-header">
+        <span class="pool-name">{{sec.label}}</span>
+        <span class="pool-meta">
+          <span class="pool-page">{{sec.page}}/{{sec.pages}}</span>
+          <span class="pool-total">{{sec.total}} 抽</span>
+        </span>
+      </div>
+        {{if sec.hasRecords}}
+        <div class="record-list">
+          {{each sec.records item idx}}
+          <div class="record-row {{item.starClass}}">
+            <span class="row-idx">{{item.index}}</span>
+            {{if item.avatar}}
+            <img class="row-avatar" src="{{item.avatar}}" alt="" onerror="this.style.display='none'">
+            {{/if}}
+            <span class="row-rarity">
+              <img class="rarity-icon" src="{{pluResPath}}meta/potential/star.png" alt="">{{item.rarity}}
+            </span>
+            <span class="row-name">{{item.name}}</span>
+          {{if item.isUp}}<span class="row-up">UP</span>{{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="empty-tip">暂无记录</div>
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-tip">翻页：:抽卡记录 {{page + 1}}</div>
+      <div class="footer-text">{{@copyright}}</div>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{pageWidth}}, initial-scale=1">
+  <title>{{title}} - 终末地公告</title>
+  <link rel="stylesheet" href="{{_res_path}}announcement/detail.css">
+  <style>
+    html,
+    body {
+      width: {
+          {
+          pageWidth
+        }
+      }
+
+      px;
+
+      min-width: {
+          {
+          pageWidth
+        }
+      }
+
+      px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="announcement-detail-container">
+    <!-- 顶部栏：标题 + 时间（参考米游社单条公告版式） -->
+    <div class="detail-top-bar">
+      <div class="detail-header-middle">
+        <h1 class="detail-title">{{title}}</h1>
+        {{if timeStr}}
+        <p class="detail-time">{{timeLabel}}{{timeStr}}</p>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- 封面图（可选） -->
+    {{if coverUrl}}
+    <div class="detail-cover-wrap">
+      <img src="{{coverUrl}}" alt="" class="detail-cover" onerror="this.style.display='none'">
+    </div>
+    {{/if}}
+
+    <!-- 正文 -->
+    <div class="detail-content-wrap">
+      <div class="detail-content">{{@captionHtml}}</div>
+    </div>
+
+    <!-- 页脚（与 help 一致） -->
+    <footer class="footer">
+      <div class="copyright">{{copyright}}</div>
+    </footer>
+  </div>
+</body>
+
+</html>

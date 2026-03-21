@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="calendar.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div class="calendar-wrapper">
+    <!-- Header Section -->
+    <div class="header">
+      <div class="top-accent"></div>
+      <div class="super-title">ARKNIGHTS:ENDFIELD</div>
+
+      <div class="title-container">
+        <div class="bg-text">CALENDAR</div>
+        <div class="main-title">
+          <div class="title-icon">
+            <div class="block-icon"></div>
+          </div>
+          <h1>「 版本日历 」 概览</h1>
+          <div class="dots-decoration">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-logo">
+        <div class="logo-text-big">终末</div>
+        <div class="logo-text-big">地</div>
+        <div class="logo-text-small">ARKNIGHTS<br />ENDFIELD</div>
+      </div>
+    </div>
+
+    <!-- Axis Area -->
+    <div class="axis-area">
+      <div class="axis-line-horizontal"></div>
+      {% for d in axis_dates %}
+      <div class="axis-marker" style="left: {{ d.left_pct }}%;">
+        <div class="axis-flag">
+          <span class="flag-text">{{ d.label }}</span>
+          <div class="flag-triangle"></div>
+        </div>
+        <div class="axis-line-vertical"></div>
+      </div>
+      {% endfor %}
+
+      {% if now_line %}
+      <div class="axis-marker now-marker" style="left: {{ now_line.left_pct }}%;">
+        <div class="axis-flag now-flag">
+          <span class="flag-text">{{ now_line.label }}</span>
+          <div class="flag-triangle now-triangle"></div>
+        </div>
+        <div class="axis-line-vertical now-vertical"></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Gantt Chart Area -->
+    <div class="gantt-area">
+      {% for lane in lanes %}
+      <div class="gantt-row">
+        <!-- Background decoration for the row -->
+        <div class="row-bg"></div>
+
+        {% for act in lane %}
+        <div class="gantt-bar-wrapper" style="left: {{ act.left_pct }}%; width: {{ act.width_pct }}%;">
+          <!-- Cyclical styles for bars -->
+          {% set bar_style = loop.cycle('theme-red', 'theme-yellow', 'theme-dark') %}
+
+          <div class="gantt-bar {{ bar_style }}">
+            <!-- Left Decoration -->
+            <div class="bar-left-dec">
+              <div class="dec-icon"></div>
+              <span>{{ act.desc }}</span>
+            </div>
+
+            <!-- Cover Image Container -->
+            <div class="bar-cover-container">
+              {% if act.cover %}
+              <img class="bar-cover" src="{{ act.cover }}" alt="cover">
+              {% endif %}
+            </div>
+
+            <!-- Right Content -->
+            <div class="bar-content">
+              <div class="bar-bracket">[ {{ act.desc }} ]</div>
+              <div class="bar-name">{{ act.name }}</div>
+              <div class="bar-time">
+                {% if act.is_perm %}
+                {{ act.start }} 开启
+                {% else %}
+                  {% if act.hide_start %}
+                  截止 {{ act.end }}
+                  {% else %}
+                  {{ act.start }} - {{ act.end }}
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <img src="{{ pluResPath }}img/logo.png" alt="footer" class="footer-img">
+    </div>
+  </div>
+</body>
+
+</html>

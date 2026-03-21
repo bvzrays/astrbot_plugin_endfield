@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{pageWidth}}, initial-scale=1">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}gacha/simulate-result.css">
+</head>
+
+<body>
+  <div class="simulate-result-container" style="min-width: {{pageWidth}}px; max-width: {{pageWidth}}px;">
+    <div class="list-top-bar">
+      <div class="list-header-middle">
+        <h1 class="list-title">{{title}}</h1>
+        {{if subtitle}}
+        <p class="list-count">{{subtitle}}</p>
+        {{/if}}
+      </div>
+      {{if pluResPath}}
+      <div class="logo-container list-top-bar-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+      </div>
+      {{/if}}
+    </div>
+
+    {{if mode === 'single'}}
+    {{if pityPanel}}
+    <div class="pity-panel card-wrap">
+      <div class="pity-title">保底进度 <span class="pity-sub">PITY STATUS</span></div>
+      <div class="pity-row">
+        <div class="pity-row-left">6星保底</div>
+        <div class="pity-row-right">{{pityPanel.six.cur}} / {{pityPanel.six.max}}</div>
+      </div>
+      <div class="pity-bar">
+        <div class="pity-bar-inner pity-bar-six" style="width: {{pityPanel.six.percent}}%;"></div>
+      </div>
+      <div class="pity-prob">{{pityPanel.six.probText}}</div>
+
+      <div class="pity-row pity-row-gap">
+        <div class="pity-row-left">大保底</div>
+        <div class="pity-row-right">{{pityPanel.guaranteedUpText}}</div>
+      </div>
+
+      {{if pityPanel.hard}}
+      <div class="pity-row pity-row-gap">
+        <div class="pity-row-left">{{pityPanel.hard.label}}</div>
+        <div class="pity-row-right">{{pityPanel.hard.cur}} / {{pityPanel.hard.max}}</div>
+      </div>
+      <div class="pity-bar">
+        <div class="pity-bar-inner pity-bar-hard" style="width: {{pityPanel.hard.percent}}%;"></div>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{if summaryCards}}
+    <div class="summary-grid">
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.total.label}}</div>
+        <div class="summary-value">{{summaryCards.total.value}}</div>
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.six.label}}</div>
+        <div class="summary-value summary-value-six">{{summaryCards.six.value}}</div>
+        {{if summaryCards.six.sub}}<div class="summary-sub">{{summaryCards.six.sub}}</div>{{/if}}
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.five.label}}</div>
+        <div class="summary-value summary-value-five">{{summaryCards.five.value}}</div>
+        {{if summaryCards.five.sub}}<div class="summary-sub">{{summaryCards.five.sub}}</div>{{/if}}
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.notWai.label}}</div>
+        <div class="summary-value summary-value-good">{{summaryCards.notWai.value}}</div>
+        {{if summaryCards.notWai.sub}}<div class="summary-sub">{{summaryCards.notWai.sub}}</div>{{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="card-wrap result-card single">
+      <div class="result-single-body">
+        {{if result.cover}}
+        <div class="char-cover-wrap">
+          <img src="{{result.cover}}" alt="{{result.charName}}" class="char-cover" onerror="this.style.display='none'">
+        </div>
+        {{/if}}
+        <div class="result-single-info">
+          <div class="result-row">
+            <span class="star star-{{result.rarity}}">{{result.starLabel}}</span>
+            {{if result.tag}}
+            <span class="tag {{result.tagClass}}">{{result.tag}}</span>
+            {{/if}}
+          </div>
+          {{if result.charName}}
+          <div class="char-name">{{result.charName}}</div>
+          {{/if}}
+          <div class="result-meta">
+            第 {{result.pull_number}} 抽
+            {{if result.pity_when_pulled != null}}
+            <span class="pity">（垫了 {{result.pity_when_pulled}} 抽）</span>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    </div>
+    {{/if}}
+
+    {{if mode === 'ten'}}
+    {{if pityPanel}}
+    <div class="pity-panel card-wrap">
+      <div class="pity-title">保底进度 <span class="pity-sub">PITY STATUS</span></div>
+      <div class="pity-row">
+        <div class="pity-row-left">6星保底</div>
+        <div class="pity-row-right">{{pityPanel.six.cur}} / {{pityPanel.six.max}}</div>
+      </div>
+      <div class="pity-bar">
+        <div class="pity-bar-inner pity-bar-six" style="width: {{pityPanel.six.percent}}%;"></div>
+      </div>
+      <div class="pity-prob">{{pityPanel.six.probText}}</div>
+
+      <div class="pity-row pity-row-gap">
+        <div class="pity-row-left">大保底</div>
+        <div class="pity-row-right">{{pityPanel.guaranteedUpText}}</div>
+      </div>
+
+      {{if pityPanel.hard}}
+      <div class="pity-row pity-row-gap">
+        <div class="pity-row-left">{{pityPanel.hard.label}}</div>
+        <div class="pity-row-right">{{pityPanel.hard.cur}} / {{pityPanel.hard.max}}</div>
+      </div>
+      <div class="pity-bar">
+        <div class="pity-bar-inner pity-bar-hard" style="width: {{pityPanel.hard.percent}}%;"></div>
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+
+    {{if summaryCards}}
+    <div class="summary-grid">
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.total.label}}</div>
+        <div class="summary-value">{{summaryCards.total.value}}</div>
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.six.label}}</div>
+        <div class="summary-value summary-value-six">{{summaryCards.six.value}}</div>
+        {{if summaryCards.six.sub}}<div class="summary-sub">{{summaryCards.six.sub}}</div>{{/if}}
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.five.label}}</div>
+        <div class="summary-value summary-value-five">{{summaryCards.five.value}}</div>
+        {{if summaryCards.five.sub}}<div class="summary-sub">{{summaryCards.five.sub}}</div>{{/if}}
+      </div>
+      <div class="summary-card card-wrap">
+        <div class="summary-label">{{summaryCards.notWai.label}}</div>
+        <div class="summary-value summary-value-good">{{summaryCards.notWai.value}}</div>
+        {{if summaryCards.notWai.sub}}<div class="summary-sub">{{summaryCards.notWai.sub}}</div>{{/if}}
+      </div>
+    </div>
+    {{/if}}
+
+    <div class="card-wrap result-card ten">
+      <div class="ten-grid">
+        {{each results}}
+        <div class="ten-card ten-card-{{$value.rarity}} {{if $value.tagClass}}ten-card-{{$value.tagClass}}{{/if}}">
+          {{if $value.cover}}
+          <img src="{{$value.cover}}" alt="{{$value.charName}}" class="ten-card-img"
+            onerror="this.style.display='none'">
+          {{/if}}
+          <div class="ten-card-top">
+            <span class="ten-card-idx">{{if $index < 9}}0{{$index+1}}{{else}}{{$index+1}}{{/if}}</span>
+          </div>
+          <div class="ten-card-bottom">
+            <div class="ten-card-name">{{if $value.charName}}{{$value.charName}}{{else}}{{$value.starLabel}}{{/if}}
+            </div>
+            <div class="ten-card-meta">
+              <span class="ten-card-star">{{$value.starLabel}}</span>
+              {{if $value.tag}}<span class="ten-card-tag ten-card-tag-{{$value.tagClass}}">{{$value.tag}}</span>{{/if}}
+            </div>
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      {{if stats}}
+      <div class="result-stats">
+        六星：{{stats.star6Count}} | UP：{{stats.upCount}} | 总抽数：{{stats.total_pulls}}
+      </div>
+      {{/if}}
+    </div>
+    {{/if}}
+  </div>
+</body>
+
+</html>

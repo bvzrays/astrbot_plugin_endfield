@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}}</title>
+  <link rel="stylesheet" href="{{_res_path}}area/area.css">
+</head>
+
+<body>
+  <div class="area-container">
+    <!-- 顶部栏：左侧用户信息 + 中间标题 + 右侧 Logo -->
+    <div class="list-top-bar">
+      <div class="user-info">
+        {{if userAvatar}}
+        <img src="{{userAvatar}}" alt="头像" class="user-avatar" onerror="this.style.display='none'">
+        {{/if}}
+        <div class="user-details">
+          <div class="user-name">{{userNickname}}</div>
+          <div class="user-uid">Lv.{{userLevel}} · UID {{userUid}}</div>
+        </div>
+      </div>
+      <div class="list-header-middle">
+        <h1 class="list-title">{{title}}</h1>
+        <p class="list-count">共 {{zoneCount}} 个地区</p>
+      </div>
+      {{if pluResPath}}
+      <div class="logo-container list-top-bar-logo">
+        <img src="{{pluResPath}}img/ET logo.svg" alt="Logo" class="logo-image">
+      </div>
+      {{/if}}
+    </div>
+
+    <!-- 地区列表 -->
+    {{each zones zone idx}}
+    <div class="zone-card has-bg">
+      <img class="zone-bg-img" src="{{pluResPath}}img/{{zone.zoneName}}.png" alt=""
+        onerror="this.style.display='none';this.nextElementSibling.style.display='none';this.parentElement.classList.remove('has-bg')">
+      <div class="zone-bg-overlay"></div>
+      <!-- 地区头部 -->
+      <div class="zone-header">
+        <div class="zone-title-group">
+          <img class="zone-pin-icon" src="{{pluResPath}}img/{{zone.zoneName}}.svg" alt=""
+            onerror="this.outerHTML='<span class=&quot;zone-pin-text&quot;>◎</span>'">
+          <span class="zone-name">{{zone.zoneName}}</span>
+          <span class="zone-level">Lv.{{zone.level}}</span>
+        </div>
+        <div class="zone-stats">
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/int_trchest_common.png"
+              alt="宝箱">宝箱 <b>{{zone.totalChest}}</b></span>
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_pazzle.png"
+              alt="拼图">拼图 <b>{{zone.totalPuzzle}}</b></span>
+          <span class="zone-stat"><img class="zone-stat-icon" src="{{pluResPath}}meta/icon/icon_map_blackbox.png"
+              alt="协议采录桩">协议采录桩 <b>{{zone.totalBlackbox}}</b></span>
+        </div>
+      </div>
+
+      <!-- 聚落 -->
+      {{if zone.settlements && zone.settlements.length > 0}}
+      <div class="settlement-list">
+        {{each zone.settlements s sIdx}}
+        <div class="settlement-item">
+          <div class="settlement-header">
+            <span class="settlement-name">{{s.name}}</span>
+            <span class="settlement-lv">Lv.{{s.level}}</span>
+          </div>
+          <div class="settlement-officer-area">
+            {{if s.officerName}}
+            <div class="officer-card">
+              {{if s.officerAvatar}}
+              <img class="officer-avatar" src="{{s.officerAvatar}}" alt="{{s.officerName}}"
+                onerror="this.parentElement.classList.add('no-avatar')">
+              {{/if}}
+              <div class="officer-info">
+                <span class="officer-tag">派驻干员</span>
+                <span class="officer-name">{{s.officerName}}</span>
+              </div>
+            </div>
+            {{else}}
+            <div class="officer-card officer-empty">
+              <div class="officer-empty-icon">＋</div>
+              <span class="officer-empty-text">未派驻</span>
+            </div>
+            {{/if}}
+          </div>
+          <!-- 调度券显示 -->
+          <div class="settlement-ticket {{if s.isFull}}ticket-full{{/if}}">
+            <div class="ticket-header">
+              <span class="ticket-label">调度券</span>
+              <span class="ticket-value">{{s.remainMoney}}/{{s.moneyMax}}</span>
+            </div>
+            <div class="ticket-bar">
+              <div class="ticket-bar-fill" style="width: {{s.moneyPercent}}%;"></div>
+            </div>
+            {{if s.isFull}}
+            <div class="ticket-full-tag">已满值</div>
+            {{/if}}
+          </div>
+        </div>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+
+    <!-- 页脚 -->
+    <footer class="footer">
+      <div class="footer-text">astrbot</div>
+    </footer>
+  </div>
+</body>
+
+</html>

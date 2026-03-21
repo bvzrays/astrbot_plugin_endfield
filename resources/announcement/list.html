@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width={{pageWidth}}, initial-scale=1">
+  <title>{{listHeader}} - 终末地</title>
+  <link rel="stylesheet" href="{{_res_path}}announcement/list.css">
+  <style>
+    html,
+    body {
+      width: {
+          {
+          pageWidth
+        }
+      }
+
+      px;
+
+      min-width: {
+          {
+          pageWidth
+        }
+      }
+
+      px;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="announcement-list-container">
+    <!-- 头部：标题 -->
+    <div class="list-top-bar">
+      <div class="list-header-middle">
+        <h1 class="list-title">{{listHeader}} <span class="list-helper-text"
+            style="font-size: 0.6em; color: #6b7280; font-weight: normal; margin-left: 8px;">输入 /公告 &lt;序号&gt;
+            即可查看具体公告内容</span></h1>
+        <p class="list-count">{{listSubtitle}}</p>
+      </div>
+    </div>
+
+    <!-- 公告条目：序号 + 标题 + 时间；下方缩略图 -->
+    <div class="announcement-entries">
+      {{each list item}}
+      <div class="announcement-item">
+        <div class="announcement-item-header">
+          <span class="announcement-num">{{item.index}}</span>
+          <span class="announcement-title">{{item.title}}</span>
+          <span class="announcement-time">{{item.timeStr}}</span>
+        </div>
+        {{if item.coverUrl}}
+        <div class="announcement-thumb-wrap">
+          <img src="{{item.coverUrl}}" alt="" class="announcement-thumb" onerror="this.style.display='none'">
+        </div>
+        {{/if}}
+      </div>
+      {{/each}}
+    </div>
+
+    <!-- 页脚（与 help 一致：第一行说明 + 第二行 {{@copyright || sys?.copyright}}） -->
+    <footer class="footer">
+      <div class="copyright">{{footerLine1}}</div>
+    </footer>
+  </div>
+</body>
+
+</html>

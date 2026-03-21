@@ -1,0 +1,512 @@
+/* 全服抽卡统计 - 多池合一 */
+@font-face {
+  font-family: 'HarmonyOS Sans SC';
+  src: url('../font/HarmonyOS_SansSC_Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 720px;
+  overflow-x: hidden;
+  background: #f0f1f3;
+  font-family: 'HarmonyOS Sans SC', -apple-system, BlinkMacSystemFont, 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+}
+
+.gs-container {
+  width: 720px;
+  padding: 14px 16px 6px;
+}
+
+/* ========== 顶部栏 ========== */
+.top-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  background: #fff;
+  border-radius: 10px;
+  position: relative;
+}
+
+.top-bar-center { text-align: center; }
+
+.top-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 2px;
+}
+
+.top-sub {
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
+.top-logo {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.top-logo img {
+  height: 42px;
+  width: auto;
+}
+
+/* ========== 全局概览 ========== */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stat-item {
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+  border: 1px solid #e5e7eb;
+}
+
+.stat-num {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #1f2937;
+  line-height: 1.2;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.68rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.stat-6 { border-color: #fecaca; background: #fef2f2; }
+.stat-6 .stat-num { color: #dc2626; }
+
+/* ========== UP 区块 ========== */
+.up-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.up-card {
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.up-card-char {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.up-card-weapon {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.up-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.up-tag {
+  font-size: 0.68rem;
+  font-weight: bold;
+  background: #dc2626;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.up-tag-weapon {
+  background: #d97706;
+}
+
+.up-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #b91c1c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.up-weapon-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #92400e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.up-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.up-rate-label {
+  font-size: 0.65rem;
+  color: #9ca3af;
+}
+
+.up-rate-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.up-rate {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #dc2626;
+  line-height: 1.1;
+}
+
+.up-rate-weapon {
+  color: #d97706;
+}
+
+.up-bar-wrap {
+  width: 8px;
+  height: 36px;
+  background: #fee2e2;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.up-card-weapon .up-bar-wrap {
+  background: #fef3c7;
+}
+
+.up-bar-fill {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px;
+}
+
+.up-bar-char { background: #dc2626; }
+.up-bar-weapon { background: #d97706; }
+
+/* ========== 官服/B 服 ========== */
+.channel-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.channel-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  padding: 10px 14px;
+}
+
+.channel-title {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: #1f2937;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.channel-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+}
+
+.ch-label {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-right: 4px;
+}
+
+.ch-val {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.ch-red { color: #dc2626; }
+
+/* ========== 卡池网格：2 列 + 全宽 ========== */
+.pool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.pool-section {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 12px 14px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* 全宽池子 */
+.pool-section.pool-full {
+  grid-column: 1 / -1;
+}
+
+/* 新手池全宽优化 */
+.pool-beginner .pool-stats {
+  gap: 16px;
+}
+
+
+.pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pool-name {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.pool-total {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* 池内统计 */
+.pool-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.ps-item {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.ps-val {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.ps-label {
+  font-size: 0.6rem;
+  color: #9ca3af;
+}
+
+.ps-red { color: #dc2626; }
+.ps-yellow { color: #d97706; }
+.ps-purple { color: #7c3aed; }
+
+/* 出货分布（横向） */
+.dist-chart-h {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 0 0;
+  margin-bottom: 6px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.dist-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dist-row .dist-label {
+  width: 32px;
+  font-size: 0.6rem;
+  color: #9ca3af;
+  text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.dist-bar-h-outer {
+  flex: 1;
+  height: 10px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dist-bar-h {
+  height: 100%;
+  min-width: 2px;
+  background: #f97316;
+  border-radius: 4px;
+}
+
+.dist-row:nth-child(n+7) .dist-bar-h {
+  background: #eab308;
+}
+
+.dist-row .dist-count {
+  width: 28px;
+  font-size: 0.6rem;
+  font-weight: bold;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+/* 出货排名 */
+.pool-ranking {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.ranking-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ranking-title {
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.ranking-title.rk-6 {
+  color: #dc2626;
+  border-bottom-color: rgba(220, 38, 38, 0.25);
+}
+
+.ranking-title.rk-5 {
+  color: #d97706;
+  border-bottom-color: rgba(217, 119, 6, 0.25);
+}
+
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  font-size: 0.72rem;
+  background: #f9fafb;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.rk-rank {
+  width: 16px;
+  text-align: center;
+  font-weight: bold;
+  color: #9ca3af;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+}
+
+.rk-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: bold;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rk-up {
+  font-size: 0.6rem;
+  background: #dc2626;
+  color: #fff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 3px;
+}
+
+.rk-count {
+  font-size: 0.72rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.rk-bar {
+  width: 36px;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.rk-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.rk-fill-6 { background: #dc2626; }
+.rk-fill-5 { background: #d97706; }
+
+/* ========== 页脚 ========== */
+.footer {
+  text-align: center;
+  margin-top: 4px;
+  padding: 6px 0 0;
+}
+
+.footer-note {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  margin-bottom: 2px;
+}
+
+.footer-hint {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.footer-text {
+  font-size: 0.7rem;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.footer-text .version {
+  margin-left: 2px;
+  color: #007180;
+}

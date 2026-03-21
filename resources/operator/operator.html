@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{name}} - 终末地干员面板</title>
+  <link rel="stylesheet" href="{{pluResPath}}operator/operator.css">
+</head>
+
+<body>
+  <div id="container">
+
+    <!-- 背景层 -->
+    <div class="page-bg" style="background-image:url('{{pluResPath}}img/短尺背景.png');"></div>
+    <div class="page-bg-overlay"></div>
+
+    <!-- 主体：左立绘 + 右信息 -->
+    <div class="main-layout">
+
+      <!-- 左：立绘 -->
+      <div class="illust-col">
+        <img src="{{illustrationUrl}}" alt="{{name}}" class="illust-img">
+      </div>
+
+      <!-- 右：所有信息卡 -->
+      <div class="info-col">
+
+        <!-- ① 顶部：用户信息 + 干员名称标题 -->
+        <div class="card header-card">
+          <!-- 玩家信息行 -->
+          <div class="user-row">
+            {{if userAvatar}}<img src="{{userAvatar}}" alt="玩家头像" class="user-avatar">{{/if}}
+            <span class="user-name">{{userNickname}}</span>
+            <span class="user-lv">Lv.{{userLevel}}</span>
+          </div>
+
+          <!-- 干员标题行 -->
+          <div class="char-title-row">
+            <!-- 精英化阶段图标 -->
+            {{if evolvePhase}}<img src="{{pluResPath}}meta/phases/phase-{{evolvePhase}}.png" alt="阶段"
+              class="phase-icon">{{/if}}
+            <h1 class="char-name">{{name}}</h1>
+            <span class="char-level-badge">Lv.<strong>{{level}}</strong></span>
+          </div>
+
+          <!-- 星级 + 标签行 -->
+          <div class="char-meta-row">
+            <div class="stars-row">
+              {{each stars}}<img src="{{pluResPath}}meta/potential/star.png" alt="★" class="star-icon">{{/each}}
+            </div>
+            {{if profession}}<span class="tag-badge">{{profession}}</span>{{/if}}
+            {{if property}}<span class="tag-badge tag-element">{{property}}</span>{{/if}}
+            {{if weaponTypeName}}<span class="tag-badge tag-weapon">{{weaponTypeName}}</span>{{/if}}
+            {{each tagsList}}<span class="tag-badge tag-skill">{{$value}}</span>{{/each}}
+          </div>
+
+          <!-- 潜能行 -->
+          <div class="potential-row">
+            <span class="potential-label">潜能</span>
+            {{each potentialStars}}
+            <img src="{{pluResPath}}meta/potential/P{{$value.index}}.png" alt=""
+              class="potential-dot {{if $value.active}}filled{{/if}}">
+            {{/each}}
+          </div>
+        </div>
+
+        <!-- ①-B 属性区 (New) -->
+        <div class="card attributes-card">
+          <div class="card-title">
+            属性 <span>ATTRIBUTES</span>
+            {{if panelStats.hint}}<span class="attr-sync-hint">{{panelStats.hint}}</span>{{/if}}
+          </div>
+          <div class="attr-grid">
+            <div class="attr-item main-stat">
+              <div class="attr-label">生命值</div>
+              <div class="attr-value">{{panelStats.summary.hp or "—"}}</div>
+            </div>
+            <div class="attr-item main-stat">
+              <div class="attr-label">攻击力</div>
+              <div class="attr-value">{{panelStats.summary.atk or "—"}}</div>
+            </div>
+            <div class="attr-item main-stat">
+              <div class="attr-label">防御力</div>
+              <div class="attr-value">{{panelStats.summary.def or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">力量</div>
+              <div class="attr-value">{{panelStats.summary.strength or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">敏捷</div>
+              <div class="attr-value">{{panelStats.summary.agility or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">智识</div>
+              <div class="attr-value">{{panelStats.summary.wisdom or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">意志</div>
+              <div class="attr-value">{{panelStats.summary.will or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">暴击率</div>
+              <div class="attr-value">{{panelStats.summary.critical_rate_pct or "—"}}</div>
+            </div>
+            <div class="attr-item">
+              <div class="attr-label">暴击伤害</div>
+              <div class="attr-value">{{panelStats.summary.critical_damage_pct or "—"}}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ② 技能 SKILLS（API (4) charData.skills + iconUrl） -->
+        <div class="card skills-card">
+          <div class="card-title">技能 <span>SKILLS</span></div>
+          <div class="skills-row">
+            {{each displaySkills s}}
+            {{if s.empty}}
+            <div class="skill-item empty">
+              <div class="skill-icon-wrap"><span class="skill-empty-label">—</span></div>
+              <span class="skill-name">—</span>
+            </div>
+            {{else}}
+            <div class="skill-item">
+              <div class="skill-icon-wrap">
+                {{if s.iconUrl}}<img src="{{s.iconUrl}}" alt="{{s.name}}" class="skill-img" onerror="this.style.display='none'">{{/if}}
+              </div>
+              <span class="skill-name">{{s.name}}</span>
+              <span class="skill-rank">{{s.level}}{{if s.maxLevel}}/{{s.maxLevel}}{{/if}}</span>
+            </div>
+            {{/if}}
+            {{/each}}
+          </div>
+        </div>
+
+        <!-- ③ 武器区 -->
+        {{if weapon}}
+        <div class="card weapon-card">
+          <div class="card-title">武器 <span>WEAPON</span></div>
+          <div class="weapon-body">
+            <div class="weapon-info">
+              <div class="weapon-name">{{weapon.name}}</div>
+              <div class="weapon-level-row">
+                <span class="weapon-lv-num">{{weapon.level}}</span>
+                <span class="weapon-lv-label">LEVEL</span>
+                {{if weapon.breakthroughLevel}}<span class="weapon-break-badge">突破
+                  {{weapon.breakthroughLevel}}</span>{{/if}}
+                {{if weapon.refineLevel}}<span class="weapon-refine-badge">精炼 {{weapon.refineLevel}}</span>{{/if}}
+              </div>
+              <div class="weapon-stars">
+                {{each weapon.stars}}<img src="{{pluResPath}}meta/potential/star.png" alt=""
+                  class="weapon-star">{{/each}}
+              </div>
+              {{if weapon.passiveSkills}}
+              <div class="weapon-passives">
+                {{each weapon.passiveSkills}}<span class="weapon-passive-tag">{{$value}}</span>{{/each}}
+              </div>
+              {{/if}}
+              {{if weapon.gem}}
+              <div class="weapon-gem">
+                <div class="gem-header">
+                  <img src="{{weapon.gem.icon}}" alt="" class="gem-icon" onerror="this.style.display='none'">
+                  <div class="gem-info">
+                    <span class="gem-name">{{weapon.gem.name}}</span>
+                    {{if weapon.gem.stars && weapon.gem.stars.length > 0}}
+                    <span class="gem-rarity">{{each weapon.gem.stars}}<img src="{{pluResPath}}meta/potential/star.png" alt="★" class="gem-star">{{/each}}</span>
+                    {{else if weapon.gem.rarity}}
+                    <span class="gem-rarity">{{weapon.gem.rarity}}★</span>
+                    {{/if}}
+                  </div>
+                </div>
+                {{if weapon.gem.gemSkills && weapon.gem.gemSkills.length > 0}}
+                <div class="gem-skills">
+                  <span class="gem-skills-label">基质属性</span>
+                  {{each weapon.gem.gemSkills}}<span class="gem-skill-tag">{{$value}}</span>{{/each}}
+                </div>
+                {{/if}}
+              </div>
+              {{/if}}
+            </div>
+            <div class="weapon-img-wrap">
+              <img src="{{weapon.iconUrl}}" alt="{{weapon.name}}" class="weapon-img">
+            </div>
+          </div>
+        </div>
+        {{/if}}
+
+        <!-- ④ 装备区 -->
+        <div class="card equip-card-section">
+          <div class="card-title">装备 <span>EQUIPMENT</span></div>
+          <div class="equip-grid">
+
+            <!-- 护甲 -->
+            {{if bodyEquip}}
+            <div class="equip-item">
+              <div class="equip-img-wrap"><img src="{{bodyEquip.iconUrl}}" alt="{{bodyEquip.name}}" class="equip-img">
+              </div>
+              <div class="equip-detail">
+                <div class="equip-name">{{bodyEquip.name}}</div>
+                <div class="equip-lv-row"><span class="equip-lv">{{bodyEquip.level}}</span><span
+                    class="equip-lv-label">LEVEL</span></div>
+                <div class="equip-stars-row">{{each bodyEquip.stars}}<img src="{{pluResPath}}meta/potential/star.png"
+                    alt="" class="equip-star">{{/each}}</div>
+                {{if bodyEquip.suitName}}<div class="equip-suit-row"><span
+                    class="suit-name">{{bodyEquip.suitName}}</span>{{if bodyEquip.suitCount}}<span
+                    class="suit-count">{{bodyEquip.suitCount}}件套</span>{{/if}}</div>{{/if}}
+              </div>
+            </div>
+            {{else}}<div class="equip-item empty-slot">
+              <div class="equip-img-wrap empty-img"><span>空</span></div>
+              <div class="equip-detail">
+                <div class="equip-name empty-name">未装备护甲</div>
+              </div>
+            </div>{{/if}}
+
+            <!-- 护手 -->
+            {{if armEquip}}
+            <div class="equip-item">
+              <div class="equip-img-wrap"><img src="{{armEquip.iconUrl}}" alt="{{armEquip.name}}" class="equip-img">
+              </div>
+              <div class="equip-detail">
+                <div class="equip-name">{{armEquip.name}}</div>
+                <div class="equip-lv-row"><span class="equip-lv">{{armEquip.level}}</span><span
+                    class="equip-lv-label">LEVEL</span></div>
+                <div class="equip-stars-row">{{each armEquip.stars}}<img src="{{pluResPath}}meta/potential/star.png"
+                    alt="" class="equip-star">{{/each}}</div>
+                {{if armEquip.suitName}}<div class="equip-suit-row"><span
+                    class="suit-name">{{armEquip.suitName}}</span>{{if armEquip.suitCount}}<span
+                    class="suit-count">{{armEquip.suitCount}}件套</span>{{/if}}</div>{{/if}}
+              </div>
+            </div>
+            {{else}}<div class="equip-item empty-slot">
+              <div class="equip-img-wrap empty-img"><span>空</span></div>
+              <div class="equip-detail">
+                <div class="equip-name empty-name">未装备护手</div>
+              </div>
+            </div>{{/if}}
+
+            <!-- 配件1 -->
+            {{if firstAccessory}}
+            <div class="equip-item">
+              <div class="equip-img-wrap"><img src="{{firstAccessory.iconUrl}}" alt="{{firstAccessory.name}}"
+                  class="equip-img"></div>
+              <div class="equip-detail">
+                <div class="equip-name">{{firstAccessory.name}}</div>
+                <div class="equip-lv-row"><span class="equip-lv">{{firstAccessory.level}}</span><span
+                    class="equip-lv-label">LEVEL</span></div>
+                <div class="equip-stars-row">{{each firstAccessory.stars}}<img
+                    src="{{pluResPath}}meta/potential/star.png" alt="" class="equip-star">{{/each}}</div>
+                {{if firstAccessory.suitName}}<div class="equip-suit-row"><span
+                    class="suit-name">{{firstAccessory.suitName}}</span>{{if firstAccessory.suitCount}}<span
+                    class="suit-count">{{firstAccessory.suitCount}}件套</span>{{/if}}</div>{{/if}}
+              </div>
+            </div>
+            {{else}}<div class="equip-item empty-slot">
+              <div class="equip-img-wrap empty-img"><span>空</span></div>
+              <div class="equip-detail">
+                <div class="equip-name empty-name">未装备配件</div>
+              </div>
+            </div>{{/if}}
+
+            <!-- 配件2 -->
+            {{if secondAccessory}}
+            <div class="equip-item">
+              <div class="equip-img-wrap"><img src="{{secondAccessory.iconUrl}}" alt="{{secondAccessory.name}}"
+                  class="equip-img"></div>
+              <div class="equip-detail">
+                <div class="equip-name">{{secondAccessory.name}}</div>
+                <div class="equip-lv-row"><span class="equip-lv">{{secondAccessory.level}}</span><span
+                    class="equip-lv-label">LEVEL</span></div>
+                <div class="equip-stars-row">{{each secondAccessory.stars}}<img
+                    src="{{pluResPath}}meta/potential/star.png" alt="" class="equip-star">{{/each}}</div>
+                {{if secondAccessory.suitName}}<div class="equip-suit-row"><span
+                    class="suit-name">{{secondAccessory.suitName}}</span>{{if secondAccessory.suitCount}}<span
+                    class="suit-count">{{secondAccessory.suitCount}}件套</span>{{/if}}</div>{{/if}}
+              </div>
+            </div>
+            {{else}}<div class="equip-item empty-slot">
+              <div class="equip-img-wrap empty-img"><span>空</span></div>
+              <div class="equip-detail">
+                <div class="equip-name empty-name">未装备配件</div>
+              </div>
+            </div>{{/if}}
+
+            <!-- 战术道具 -->
+            {{if tacticalItem}}
+            <div class="equip-item tactical-item">
+              <div class="equip-img-wrap"><img src="{{tacticalItem.iconUrl}}" alt="{{tacticalItem.name}}"
+                  class="equip-img"></div>
+              <div class="equip-detail">
+                <div class="equip-name">{{tacticalItem.name}}</div>
+                <span class="tactical-tag">战术道具</span>
+                {{if tacticalItem.activeEffect}}<div class="tactical-effect">{{tacticalItem.activeEffect}}</div>{{/if}}
+              </div>
+            </div>
+            {{/if}}
+
+          </div>
+        </div>
+
+        <!-- ⑤ 页脚 -->
+        <footer class="footer">
+          <div class="copyright">{{@copyright}}</div>
+        </footer>
+
+      </div><!-- /info-col -->
+    </div><!-- /main-layout -->
+  </div>
+</body>
+
+</html>
