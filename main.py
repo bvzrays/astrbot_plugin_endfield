@@ -2056,7 +2056,7 @@ class EndfieldPlugin(Star):
         # Trigger sync
         sync_res = await self.client.sync_panel(token)
         if not sync_res:
-            yield event.plain_result("❌ 触发面板同步失败，请稍后再试。")
+            yield event.plain_result("❌ 触发面板同步失败，请检查API订阅权限或稍后再试。")
             return
 
         yield event.plain_result("🔄 面板同步已提交，请稍候...")
