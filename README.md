@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🌌 astrbot_plugin_endfield
-### * 协议终端终末地插件  astrbot移植版*
+### *协议终端终末地插件  astrbot移植版*
 
 [![GitHub stars](https://img.shields.io/github/stars/bvzrays/astrbot_plugin_endfield?style=for-the-badge&color=FF6B6B)](https://github.com/bvzrays/astrbot_plugin_endfield/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/bvzrays/astrbot_plugin_endfield?style=for-the-badge&color=4ECDC4)](https://github.com/bvzrays/astrbot_plugin_endfield/network)
