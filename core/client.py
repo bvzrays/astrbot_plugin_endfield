@@ -421,7 +421,7 @@ class EndfieldClient:
             )
             if not res:
                 break
-            records = res.get("records", [])
+            records = res.get("records") or []
             all_records.extend(records)
             total_pages = res.get("pages", 1)
             if page >= total_pages:
