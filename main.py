@@ -3652,7 +3652,10 @@ class EndfieldPlugin(Star):
                     rem_m_f = 0.0
                     max_m_f = 1.0
 
-                m_percent = min(100, round(rem_m_f / max_m_f * 100))
+                if max_m_f > 0:
+                    m_percent = min(100, round(rem_m_f / max_m_f * 100))
+                else:
+                    m_percent = 0
 
                 zone_data["settlements"].append(
                     {
