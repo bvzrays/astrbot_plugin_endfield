@@ -142,7 +142,7 @@ def build_detail_render_data(item: dict) -> dict:
     "astrbot_plugin_endfield",
     "bvzrays & 熵增项目组",
     "终末地协议终端",
-    "2.7.0",
+    "2.8.0",
     "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield",
 )
 class EndfieldPlugin(Star):
