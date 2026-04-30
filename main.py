@@ -368,6 +368,147 @@ class EndfieldPlugin(Star):
         tasks = [_download(url) for url in urls]
         return await asyncio.gather(*tasks)
 
+    @staticmethod
+    def _norm_text(value) -> str:
+        return str(value or "").strip()
+
+    @staticmethod
+    def _unwrap_api_data(data):
+        if isinstance(data, dict) and isinstance(data.get("data"), dict):
+            return data["data"]
+        return data if isinstance(data, dict) else {}
+
+    @staticmethod
+    def _extract_template_id(*items) -> str:
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            for key in ("template_id", "templateId"):
+                val = item.get(key)
+                if val:
+                    return str(val).strip()
+            template = item.get("template")
+            if isinstance(template, dict):
+                val = template.get("id") or template.get("raw_name")
+                if val:
+                    return str(val).strip()
+        return ""
+
+    def _extract_friend_showcase(self, friend_res: dict) -> dict:
+        data = self._unwrap_api_data(friend_res)
+        profile = data.get("role_profile") if isinstance(data, dict) else {}
+        if not isinstance(profile, dict):
+            profile = {}
+        chars = profile.get("char_data") or []
+        if not isinstance(chars, list):
+            chars = []
+        role_id = (
+            profile.get("role_id")
+            or profile.get("roleId")
+            or data.get("role_id")
+            or data.get("roleId")
+            or ""
+        )
+        return {"role_id": str(role_id or "").strip(), "chars": chars}
+
+    def _find_friend_showcase_char(
+        self, friend_res: dict, char_name: str = "", template_id: str = ""
+    ) -> dict:
+        target_name = self._norm_text(char_name)
+        target_template = self._norm_text(template_id)
+        for item in self._extract_friend_showcase(friend_res).get("chars", []):
+            if not isinstance(item, dict):
+                continue
+            template = item.get("template") or {}
+            item_template = self._extract_template_id(item, template)
+            item_name = self._norm_text(
+                template.get("name_cn")
+                or template.get("name")
+                or item.get("name_cn")
+                or item.get("name")
+            )
+            if target_template and item_template == target_template:
+                return item
+            if target_name and item_name == target_name:
+                return item
+        return {}
+
+    async def _get_panel_chars_all(self, token: str, page_size: int = 50) -> dict:
+        chars = []
+        page = 1
+        total = 0
+        role_id = ""
+        last_synced_at = ""
+        while True:
+            res = await self.client.get_panel_chars(token, page=page, page_size=page_size)
+            if not res:
+                break
+            rows = res.get("synced_chars") or []
+            if isinstance(rows, list):
+                chars.extend(rows)
+            total = int(res.get("total") or total or 0)
+            role_id = str(
+                res.get("game_role_id")
+                or (res.get("role_profile") or {}).get("role_id")
+                or role_id
+                or ""
+            ).strip()
+            last_synced_at = res.get("last_synced_at") or last_synced_at
+            if not rows or len(rows) < page_size or (total and len(chars) >= total):
+                break
+            page += 1
+        return {
+            "synced_chars": chars,
+            "total": total or len(chars),
+            "game_role_id": role_id,
+            "last_synced_at": last_synced_at,
+        }
+
+    async def _build_panel_available_summary(self, token: str, role_id: str) -> dict:
+        panel_chars_res, friend_detail_res = await asyncio.gather(
+            self._get_panel_chars_all(token),
+            self.client.get_friend_detail(role_id, framework_token=token),
+            return_exceptions=True,
+        )
+        if isinstance(panel_chars_res, Exception):
+            panel_chars_res = {}
+        if isinstance(friend_detail_res, Exception):
+            friend_detail_res = {}
+
+        names = []
+        seen = set()
+
+        def add_name(name):
+            name = self._norm_text(name)
+            if not name or name in seen:
+                return
+            seen.add(name)
+            names.append(name)
+
+        synced_chars = panel_chars_res.get("synced_chars", []) or []
+        for item in synced_chars:
+            if isinstance(item, dict):
+                add_name(item.get("name_cn") or item.get("name") or item.get("template_id"))
+
+        friend_chars = self._extract_friend_showcase(friend_detail_res).get("chars", [])
+        for item in friend_chars:
+            if not isinstance(item, dict):
+                continue
+            template = item.get("template") or {}
+            add_name(
+                template.get("name_cn")
+                or template.get("name")
+                or item.get("name_cn")
+                or item.get("name")
+                or self._extract_template_id(item, template)
+            )
+
+        return {
+            "names": names,
+            "synced_count": len(synced_chars),
+            "friend_count": len(friend_chars),
+        }
+
     async def initialize(self):
         # Tasks
         self._announcement_task_handle = asyncio.create_task(self.announcement_task())
@@ -1784,10 +1925,59 @@ class EndfieldPlugin(Star):
             yield event.plain_result("未查询到干员数据。")
             return
 
+        role_id_str = str(binding.get("role_id", "") or "")
+        panel_chars_res, friend_detail_res = await asyncio.gather(
+            self._get_panel_chars_all(token),
+            self.client.get_friend_detail(role_id_str, framework_token=token),
+            return_exceptions=True,
+        )
+        if isinstance(panel_chars_res, Exception):
+            logger.warning(f"读取面板同步列表失败，继续使用持有干员列表: {panel_chars_res}")
+            panel_chars_res = {}
+        if isinstance(friend_detail_res, Exception):
+            logger.warning(f"读取好友展示列表失败，继续使用持有干员列表: {friend_detail_res}")
+            friend_detail_res = {}
+
+        synced_map = {}
+        synced_order = {}
+        for idx, item in enumerate(panel_chars_res.get("synced_chars", []) or []):
+            template_id = self._norm_text(item.get("template_id") or item.get("templateId"))
+            if not template_id:
+                continue
+            synced_map[template_id] = item
+            synced_order.setdefault(template_id, idx)
+
+        friend_showcase = self._extract_friend_showcase(friend_detail_res)
+        friend_template_ids = set()
+        friend_template_names = set()
+        friend_name_by_id = {}
+        for item in friend_showcase.get("chars", []):
+            if not isinstance(item, dict):
+                continue
+            template = item.get("template") or {}
+            template_id = self._extract_template_id(item, template)
+            name_cn = self._norm_text(
+                template.get("name_cn")
+                or template.get("name")
+                or item.get("name_cn")
+                or item.get("name")
+            )
+            if template_id:
+                friend_template_ids.add(template_id)
+                if name_cn and template_id not in friend_name_by_id:
+                    friend_name_by_id[template_id] = name_cn
+            if name_cn:
+                friend_template_names.add(name_cn)
+
         color_codes = {
             "PHYSICAL": "PHY",
+            "物理": "PHY",
             "ARTS": "ART",
             "TRUE": "TRU",
+            "灼热": "FIRE",
+            "寒冷": "ICE",
+            "电磁": "ELEC",
+            "自然": "NATURE",
             "STRIKER": "STR",
             "CASTER": "CAS",
             "SUPPORT": "SUP",
@@ -1811,10 +2001,26 @@ class EndfieldPlugin(Star):
             char_data = c.get("charData", c)
             prof = char_data.get("profession", {}).get("value", "")
             prop = char_data.get("property", {}).get("value", "")
+            template_id = self._extract_template_id(c, char_data)
+            synced = synced_map.get(template_id, {})
+            name = (
+                self._norm_text(char_data.get("name"))
+                or self._norm_text(c.get("name"))
+                or friend_name_by_id.get(template_id, "")
+                or self._norm_text(synced.get("name_cn") or synced.get("name"))
+                or "未知"
+            )
+            is_synced = template_id in synced_order
+            is_friend_showcase = (
+                is_synced
+                or (template_id and template_id in friend_template_ids)
+                or name in friend_template_names
+            )
             operators.append(
                 {
-                    "name": char_data.get("name", "未知"),
-                    "nameChars": list(char_data.get("name", "未知")),
+                    "templateId": template_id,
+                    "name": name,
+                    "nameChars": list(name),
                     "rarity": int(char_data.get("rarity", {}).get("value", 1))
                     if isinstance(char_data.get("rarity"), dict)
                     else 1,
@@ -1833,10 +2039,19 @@ class EndfieldPlugin(Star):
                     ),
                     "potentialLevel": c.get("potentialLevel", 0),
                     "colorCode": color_codes.get(prop, "PHY"),
+                    "isFriendShowcase": is_friend_showcase,
+                    "syncOrder": synced_order.get(template_id, 10**9),
                 }
             )
 
-        operators.sort(key=lambda x: (x["rarity"], x["level"]), reverse=True)
+        operators.sort(
+            key=lambda x: (
+                0 if x.get("isFriendShowcase") else 1,
+                x.get("syncOrder", 10**9),
+                -x["rarity"],
+                -x["level"],
+            )
+        )
 
         # Calculate layout constraints
         list_card_width = 300
@@ -1962,8 +2177,12 @@ class EndfieldPlugin(Star):
 
         # Fetch synced panel data for combat stats
         template_id = matched.get("template_id") or matched.get("templateId")
+        panel_chars_res = None
+        friend_detail_res = None
+        friend_role_id = role_id_str
+        friend_template_id = ""
         if not template_id:
-            panel_chars_res = await self.client.get_panel_chars(token)
+            panel_chars_res = await self._get_panel_chars_all(token)
             if panel_chars_res and "synced_chars" in panel_chars_res:
                 for pc in panel_chars_res["synced_chars"]:
                     pc_name = pc.get("name_cn") or pc.get("name", "")
@@ -1974,6 +2193,17 @@ class EndfieldPlugin(Star):
                     ):
                         template_id = pc.get("template_id")
                         break
+
+        if not template_id:
+            friend_detail_res = await self.client.get_friend_detail(
+                role_id_str, framework_token=token
+            )
+            friend_hit = self._find_friend_showcase_char(friend_detail_res, char_name)
+            friend_template_id = self._extract_template_id(
+                friend_hit, friend_hit.get("template") if isinstance(friend_hit, dict) else {}
+            )
+            if friend_template_id:
+                template_id = friend_template_id
 
         _panel_hint = "数据未同步，发送「同步面板」更新（请将要同步的干员放到主页展示）"
         panel_stats = {"summary": {}, "hint": _panel_hint}
@@ -2010,10 +2240,25 @@ class EndfieldPlugin(Star):
 
             # Yunzai fallback: GET /api/friend/char when panel has no usable combat stats
             if not panel_stats.get("summary", {}).get("hp"):
+                if friend_detail_res is None:
+                    friend_detail_res = await self.client.get_friend_detail(
+                        role_id_str, framework_token=token
+                    )
+                showcase = self._extract_friend_showcase(friend_detail_res)
+                friend_role_id = showcase.get("role_id") or role_id_str
+                friend_hit = self._find_friend_showcase_char(
+                    friend_detail_res, char_name, template_id
+                )
+                friend_template_id = self._extract_template_id(
+                    friend_hit,
+                    friend_hit.get("template") if isinstance(friend_hit, dict) else {},
+                )
+                query_template_id = friend_template_id or template_id
                 fc_res = await self.client.get_friend_char(
-                    role_id_str,
-                    template_id,
+                    friend_role_id,
+                    query_template_id,
                     framework_token=token,
+                    char_id=query_template_id,
                 )
                 if fc_res:
                     fc_inner = (
@@ -2052,11 +2297,22 @@ class EndfieldPlugin(Star):
             return
 
         token = binding.get("framework_token")
+        role_id = str(binding.get("role_id", "") or "")
 
         # Trigger sync
         sync_res = await self.client.sync_panel(token)
         if not sync_res:
-            yield event.plain_result("❌ 触发面板同步失败，请检查API订阅权限或稍后再试。")
+            summary = await self._build_panel_available_summary(token, role_id)
+            if summary["names"]:
+                msg = "⚠️ 面板同步服务暂不可用，已降级读取同步缓存/好友展示数据。"
+                msg += (
+                    f"\n缓存 {summary['synced_count']} 名，"
+                    f"好友展示 {summary['friend_count']} 名。"
+                )
+                msg += "\n" + "、".join(summary["names"])
+                yield event.plain_result(msg)
+            else:
+                yield event.plain_result("❌ 触发面板同步失败，且未读取到可用的同步缓存或好友展示数据。")
             return
 
         yield event.plain_result("🔄 面板同步已提交，请稍候...")
@@ -2079,7 +2335,7 @@ class EndfieldPlugin(Star):
 
             if status == "completed" or status == "idle":
                 # Fetch synced character list for names
-                chars_res = await self.client.get_panel_chars(token)
+                chars_res = await self._get_panel_chars_all(token)
                 char_names = []
                 if chars_res and "synced_chars" in chars_res:
                     char_names = [
@@ -2095,13 +2351,33 @@ class EndfieldPlugin(Star):
                 yield event.plain_result(msg)
                 return
             elif status == "failed":
-                yield event.plain_result("❌ 面板同步失败，请稍后重试。")
+                summary = await self._build_panel_available_summary(token, role_id)
+                if summary["names"]:
+                    msg = "⚠️ 面板同步失败，已降级读取同步缓存/好友展示数据。"
+                    msg += (
+                        f"\n缓存 {summary['synced_count']} 名，"
+                        f"好友展示 {summary['friend_count']} 名。"
+                    )
+                    msg += "\n" + "、".join(summary["names"])
+                    yield event.plain_result(msg)
+                else:
+                    yield event.plain_result("❌ 面板同步失败，请稍后重试。")
                 return
             # syncing / pending: keep polling silently
 
-        yield event.plain_result(
-            "⏱ 同步超时，数据可能已在后台更新，稍后查看干员面板即可。"
-        )
+        summary = await self._build_panel_available_summary(token, role_id)
+        if summary["names"]:
+            msg = "⏱ 同步超时，已先返回当前同步缓存/好友展示数据。"
+            msg += (
+                f"\n缓存 {summary['synced_count']} 名，"
+                f"好友展示 {summary['friend_count']} 名。"
+            )
+            msg += "\n" + "、".join(summary["names"])
+            yield event.plain_result(msg)
+        else:
+            yield event.plain_result(
+                "⏱ 同步超时，数据可能已在后台更新，稍后查看干员面板即可。"
+            )
 
     @filter.command("抽卡记录")
     async def gacha_records(self, event: AstrMessageEvent, page: int = 1):

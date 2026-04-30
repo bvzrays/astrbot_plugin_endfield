@@ -365,11 +365,14 @@ class EndfieldClient:
         role_id: str,
         template_id: str,
         framework_token: Optional[str] = None,
+        char_id: str = "",
     ) -> Optional[Dict]:
         """GET /api/friend/char — pass framework_token for UnifiedAuth + SubscriptionGuard."""
         params: Dict[str, Any] = {"template_id": template_id}
         if role_id:
             params["role_id"] = role_id
+        if char_id:
+            params["char_id"] = char_id
         return await self._get(
             "/api/friend/char", params=params, framework_token=framework_token
         )
@@ -573,9 +576,17 @@ class EndfieldClient:
             "/api/panel/sync/status", framework_token=framework_token
         )
 
-    async def get_panel_chars(self, framework_token: str) -> Optional[Dict]:
+    async def get_panel_chars(
+        self, framework_token: str, page: int = 1, page_size: int = 20
+    ) -> Optional[Dict]:
         """GET /api/panel/chars"""
-        return await self._get("/api/panel/chars", framework_token=framework_token)
+        page = max(1, int(page or 1))
+        page_size = min(50, max(1, int(page_size or 20)))
+        return await self._get(
+            "/api/panel/chars",
+            params={"page": page, "page_size": page_size},
+            framework_token=framework_token,
+        )
 
     async def get_panel_char(
         self, framework_token: str, template_id: str
