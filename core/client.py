@@ -344,9 +344,9 @@ class EndfieldClient:
             "/api/endfield/achieve", params=p, framework_token=framework_token
         )
 
-    async def get_search_chars(self) -> Optional[Dict]:
+    async def get_search_chars(self, framework_token: str = "") -> Optional[Dict]:
         """GET /api/endfield/search/chars"""
-        return await self._get("/api/endfield/search/chars")
+        return await self._get("/api/endfield/search/chars", framework_token=framework_token)
 
     # ─── Friend (public, no framework_token needed) ───────────────────
     async def get_friend_detail(
