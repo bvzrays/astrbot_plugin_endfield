@@ -187,25 +187,21 @@ class EndfieldPlugin(Star):
         self.banner_cache = {}
         self._operator_name_cache: set = set()
 
-    async def _ensure_operator_name_cache(self):
-        """从协议终端拉取全局干员列表并缓存，用于面板指令的正名校验。"""
+    async def _ensure_operator_name_cache(self, token: str):
+        """用当前用户的 token 拉取全局干员列表并缓存。已缓存则直接返回 True。"""
         if self._operator_name_cache:
-            return
-        all_bindings = await self.user_mgr.get_all_bindings()
-        for b in all_bindings:
-            token = b.get("framework_token")
-            if not token:
-                continue
-            res = await self.client.get_search_chars(framework_token=token)
-            if res and "chars" in res:
-                for c in res["chars"]:
-                    name = c.get("name", "")
-                    if name:
-                        self._operator_name_cache.add(name)
-                logger.info(
-                    f"[Endfield] 干员名称缓存已就绪，共 {len(self._operator_name_cache)} 名干员"
-                )
-                return
+            return True
+        res = await self.client.get_search_chars(framework_token=token)
+        if not res or "chars" not in res:
+            return False
+        for c in res["chars"]:
+            name = c.get("name", "")
+            if name:
+                self._operator_name_cache.add(name)
+        logger.info(
+            f"[Endfield] 干员名称缓存已就绪，共 {len(self._operator_name_cache)} 名干员"
+        )
+        return True
 
     def _get_server_name(self, acc: dict) -> str:
         """从账号对象中获取可读的服务器名称。"""
@@ -2155,20 +2151,25 @@ class EndfieldPlugin(Star):
         }:
             return
 
-        # Guard: only proceed if char_name is a known operator
-        await self._ensure_operator_name_cache()
-        if self._operator_name_cache and char_name not in self._operator_name_cache:
-            return
-
         user_id = event.get_sender_id()
         binding = await self.user_mgr.get_primary_binding(user_id)
         if not binding:
-            yield event.plain_result("未绑定账号。")
+            yield event.plain_result("未绑定账号，请输入 /zmd 查看绑定方式。")
+            return
+
+        token = binding.get("framework_token")
+
+        # Guard: only proceed if char_name is a known operator
+        cache_ok = await self._ensure_operator_name_cache(token)
+        if not cache_ok:
+            yield event.plain_result(
+                "您的登录凭证已过期，请重新发送「授权登陆」或「扫码绑定」。"
+            )
+            return
+        if self._operator_name_cache and char_name not in self._operator_name_cache:
             return
 
         yield event.plain_result(f"正在查询 {char_name} 的面板...")
-
-        token = binding.get("framework_token")
         note = await self.client.get_note(
             token, binding["role_id"], int(binding.get("server_id", 1))
         )
