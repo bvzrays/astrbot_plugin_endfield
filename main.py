@@ -185,6 +185,27 @@ class EndfieldPlugin(Star):
         self._auto_sign_in_task_handle = None
         self._http_client = None
         self.banner_cache = {}
+        self._operator_name_cache: set = set()
+
+    async def _ensure_operator_name_cache(self):
+        """从协议终端拉取全局干员列表并缓存，用于面板指令的正名校验。"""
+        if self._operator_name_cache:
+            return
+        all_bindings = await self.user_mgr.get_all_bindings()
+        for b in all_bindings:
+            token = b.get("framework_token")
+            if not token:
+                continue
+            res = await self.client.get_search_chars(framework_token=token)
+            if res and "chars" in res:
+                for c in res["chars"]:
+                    name = c.get("name", "")
+                    if name:
+                        self._operator_name_cache.add(name)
+                logger.info(
+                    f"[Endfield] 干员名称缓存已就绪，共 {len(self._operator_name_cache)} 名干员"
+                )
+                return
 
     def _get_server_name(self, acc: dict) -> str:
         """从账号对象中获取可读的服务器名称。"""
@@ -2132,6 +2153,11 @@ class EndfieldPlugin(Star):
             "菜单",
             "帮助",
         }:
+            return
+
+        # Guard: only proceed if char_name is a known operator
+        await self._ensure_operator_name_cache()
+        if self._operator_name_cache and char_name not in self._operator_name_cache:
             return
 
         user_id = event.get_sender_id()
