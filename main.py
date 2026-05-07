@@ -185,6 +185,26 @@ class EndfieldPlugin(Star):
         self._auto_sign_in_task_handle = None
         self._http_client = None
         self.banner_cache = {}
+        self._operator_name_cache: set = set()
+        self._cache_ts = 0
+
+    async def _ensure_operator_name_cache(self, token: str):
+        """用当前用户的 token 拉取全局干员列表并缓存。24h 有效期。"""
+        if self._operator_name_cache and time.time() - self._cache_ts < 86400:
+            return True
+        res = await self.client.get_search_chars(framework_token=token)
+        if not res or "chars" not in res:
+            return False
+        self._operator_name_cache.clear()
+        for c in res["chars"]:
+            name = c.get("name", "")
+            if name:
+                self._operator_name_cache.add(name)
+        self._cache_ts = time.time()
+        logger.info(
+            f"[Endfield] 干员名称缓存已就绪，共 {len(self._operator_name_cache)} 名干员"
+        )
+        return True
 
     def _get_server_name(self, acc: dict) -> str:
         """从账号对象中获取可读的服务器名称。"""
@@ -2137,12 +2157,22 @@ class EndfieldPlugin(Star):
         user_id = event.get_sender_id()
         binding = await self.user_mgr.get_primary_binding(user_id)
         if not binding:
-            yield event.plain_result("未绑定账号。")
+            yield event.plain_result("未绑定账号，请输入 /zmd 查看绑定方式。")
+            return
+
+        token = binding.get("framework_token")
+
+        # Guard: only proceed if char_name is a known operator
+        cache_ok = await self._ensure_operator_name_cache(token)
+        if not cache_ok:
+            yield event.plain_result(
+                "您的登录凭证已过期，请重新发送「授权登陆」或「扫码绑定」。"
+            )
+            return
+        if self._operator_name_cache and char_name not in self._operator_name_cache:
             return
 
         yield event.plain_result(f"正在查询 {char_name} 的面板...")
-
-        token = binding.get("framework_token")
         note = await self.client.get_note(
             token, binding["role_id"], int(binding.get("server_id", 1))
         )
