@@ -186,18 +186,21 @@ class EndfieldPlugin(Star):
         self._http_client = None
         self.banner_cache = {}
         self._operator_name_cache: set = set()
+        self._cache_ts = 0
 
     async def _ensure_operator_name_cache(self, token: str):
-        """用当前用户的 token 拉取全局干员列表并缓存。已缓存则直接返回 True。"""
-        if self._operator_name_cache:
+        """用当前用户的 token 拉取全局干员列表并缓存。24h 有效期。"""
+        if self._operator_name_cache and time.time() - self._cache_ts < 86400:
             return True
         res = await self.client.get_search_chars(framework_token=token)
         if not res or "chars" not in res:
             return False
+        self._operator_name_cache.clear()
         for c in res["chars"]:
             name = c.get("name", "")
             if name:
                 self._operator_name_cache.add(name)
+        self._cache_ts = time.time()
         logger.info(
             f"[Endfield] 干员名称缓存已就绪，共 {len(self._operator_name_cache)} 名干员"
         )
