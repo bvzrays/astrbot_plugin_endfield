@@ -142,7 +142,7 @@ def build_detail_render_data(item: dict) -> dict:
     "astrbot_plugin_endfield",
     "bvzrays & 熵增项目组",
     "终末地协议终端",
-    "2.8.0",
+    "2.9.0",
     "https://github.com/Entropy-Increase-Team/astrbot_plugin_endfield",
 )
 class EndfieldPlugin(Star):
@@ -1455,7 +1455,9 @@ class EndfieldPlugin(Star):
             "userName": user_name,
             "userUid": role_id,
             "userLevel": user_level,
-            "userAvatar": await self.get_b64(user_avatar) if user_avatar else "",
+            "userAvatar": await self.get_b64(
+                user_avatar or binding.get("avatarUrl", "")
+            ),
             "current": s_current,
             "max": s_max,
             "staminaPercent": s_current / max(s_max, 1),
@@ -2602,32 +2604,42 @@ class EndfieldPlugin(Star):
 
         up_pools, base_pools, weapon_pools = [], [], []
 
-        # 1. Fetch limited and standard records first to calculate shared pity for limited pools
-        limited_records = await self.client.get_all_gacha_records(
-            token, pools="limited"
-        )
+        featured_pool_keys = {"limited", "joint"}
+        featured_records_by_key = {}
+        featured_seq_pity_by_key = {}
+        featured_active_pool_by_key = {}
+        featured_active_pity_by_key = {}
 
-        # Calculate cross-banner shared pity for limited pools
-        # Sort chronologically: oldest first
-        limited_sorted = sorted(
-            limited_records, key=lambda x: int(x.get("seq_id", 0) or 0), reverse=False
-        )
-        shared_pity_count = 0
-        seq_id_to_pity = {}
-        for r in limited_sorted:
-            if not r.get("is_free"):
-                shared_pity_count += 1
-                seq_id_to_pity[str(r.get("seq_id", ""))] = shared_pity_count
-                if int(r.get("rarity", 0)) == 6:
-                    shared_pity_count = 0
+        # Calculate cross-banner shared pity inside each featured character pool type.
+        for featured_key in featured_pool_keys:
+            records = await self.client.get_all_gacha_records(
+                token, pools=featured_key
+            )
+            featured_records_by_key[featured_key] = records
+            sorted_records = sorted(
+                records, key=lambda x: int(x.get("seq_id", 0) or 0), reverse=False
+            )
 
-        # Find the currently active limited pool (the latest one chronologically)
-        active_limited_pool = None
-        if limited_sorted:
-            active_limited_pool = limited_sorted[-1].get("pool_name", "").strip()
+            shared_pity_count = 0
+            seq_id_to_pity = {}
+            for r in sorted_records:
+                if not r.get("is_free"):
+                    shared_pity_count += 1
+                    seq_id_to_pity[str(r.get("seq_id", ""))] = shared_pity_count
+                    if int(r.get("rarity", 0)) == 6:
+                        shared_pity_count = 0
+
+            featured_seq_pity_by_key[featured_key] = seq_id_to_pity
+            featured_active_pity_by_key[featured_key] = shared_pity_count
+            featured_active_pool_by_key[featured_key] = (
+                sorted_records[-1].get("pool_name", "").strip()
+                if sorted_records
+                else None
+            )
 
         pool_types = [
             {"key": "limited", "label": "限定角色"},
+            {"key": "joint", "label": "联合寻访"},
             {"key": "standard", "label": "常驻角色"},
             {"key": "weapon", "label": "武器池"},
             {"key": "beginner", "label": "新手池"},
@@ -2635,8 +2647,8 @@ class EndfieldPlugin(Star):
 
         for ptype in pool_types:
             key = ptype["key"]
-            if key == "limited":
-                records = limited_records
+            if key in featured_pool_keys:
+                records = featured_records_by_key.get(key, [])
             else:
                 records = await self.client.get_all_gacha_records(token, pools=key)
 
@@ -2652,9 +2664,12 @@ class EndfieldPlugin(Star):
                 pools_dict[pname].append(r)
 
             for pool_name, pool_records in pools_dict.items():
-                # Only show the pity bar for the active limited pool
+                # Only show the pity bar for the active featured pool of that type.
                 show_pity_bar = True
-                if key == "limited" and pool_name != active_limited_pool:
+                if (
+                    key in featured_pool_keys
+                    and pool_name != featured_active_pool_by_key.get(key)
+                ):
                     show_pity_bar = False
 
                 entry = await self._prepare_gacha_pool_entry(
@@ -2663,15 +2678,18 @@ class EndfieldPlugin(Star):
                     key,
                     icon_map,
                     up_info,
-                    seq_id_to_pity=seq_id_to_pity if key == "limited" else None,
+                    seq_id_to_pity=featured_seq_pity_by_key.get(key)
+                    if key in featured_pool_keys
+                    else None,
                     show_pity_bar=show_pity_bar,
-                    active_limited_pity=shared_pity_count
-                    if key == "limited" and pool_name == active_limited_pool
+                    active_limited_pity=featured_active_pity_by_key.get(key)
+                    if key in featured_pool_keys
+                    and pool_name == featured_active_pool_by_key.get(key)
                     else None,
                 )
                 if key == "weapon":
                     weapon_pools.append(entry)
-                elif key == "limited":
+                elif key in featured_pool_keys:
                     up_pools.append(entry)
                 else:
                     base_pools.append(entry)
@@ -2680,6 +2698,9 @@ class EndfieldPlugin(Star):
             total = sum(p.get("totalRaw", 0) for p in pools)
             star6 = sum(p.get("star6", 0) for p in pools)
             return round(total / star6) if star6 > 0 else "-"
+
+        for pools in (up_pools, weapon_pools, base_pools):
+            pools.sort(key=lambda p: p.get("latestSort", 0), reverse=True)
 
         render_data["upPools"] = up_pools
         render_data["basePools"] = base_pools
@@ -2704,6 +2725,80 @@ class EndfieldPlugin(Star):
                 f"【抽卡分析】总抽数：{render_data['totalCount']}（渲染异常）"
             )
 
+    def _normalize_up_names(self, value) -> list:
+        """Normalize UP name payloads from API strings/lists to a clean list."""
+        if not value:
+            return []
+        if isinstance(value, (list, tuple, set)):
+            names = []
+            for item in value:
+                if isinstance(item, dict):
+                    item = (
+                        item.get("name")
+                        or item.get("char_name")
+                        or item.get("weapon_name")
+                        or item.get("item_name")
+                    )
+                names.extend(self._normalize_up_names(item))
+            return list(dict.fromkeys(names))
+
+        text = str(value).strip()
+        if not text:
+            return []
+        for sep in ["、", "，", ",", "/", "／", "|"]:
+            text = text.replace(sep, "\n")
+        return list(
+            dict.fromkeys(
+                [name.strip() for name in text.splitlines() if name.strip()]
+            )
+        )
+
+    def _merge_pool_up_names(self, up_info: dict, pool_name: str, names) -> None:
+        pool_name = str(pool_name or "").strip()
+        new_names = self._normalize_up_names(names)
+        if not pool_name or not new_names:
+            return
+        old_names = self._normalize_up_names(
+            up_info.get("pool_up_map", {}).get(pool_name, [])
+        )
+        up_info.setdefault("pool_up_map", {})[pool_name] = list(
+            dict.fromkeys(old_names + new_names)
+        )
+
+    def _get_pool_up_names(self, pool_name: str, up_info: dict) -> list:
+        pool_name = str(pool_name or "").strip()
+        if not pool_name:
+            return []
+        for p_name, names in up_info.get("pool_up_map", {}).items():
+            p_name = str(p_name or "").strip()
+            if pool_name == p_name or p_name in pool_name or pool_name in p_name:
+                return self._normalize_up_names(names)
+        return []
+
+    def _get_gacha_record_sort_value(self, record: dict) -> int:
+        """Prefer actual gacha timestamp; fall back to seq_id for old records."""
+        for key in ("gacha_ts", "seq_id"):
+            try:
+                value = int(record.get(key) or 0)
+                if value > 0:
+                    return value
+            except Exception:
+                pass
+        return 0
+
+    def _find_gacha_icon_url(self, icon_map: dict, name: str) -> str:
+        name = str(name or "").strip()
+        if not name:
+            return ""
+        if icon_map.get(name):
+            return icon_map[name]
+        normalized = re.sub(r"\s+", "", name).lower()
+        for key, url in icon_map.items():
+            key_norm = re.sub(r"\s+", "", str(key or "")).lower()
+            if key_norm and (key_norm == normalized or key_norm in normalized or normalized in key_norm):
+                return url
+        return ""
+
     async def _get_current_up_info(self) -> dict:
         """Get current UP character/weapon info from wiki activities and global stats."""
         up_info = {
@@ -2713,6 +2808,44 @@ class EndfieldPlugin(Star):
             "active_weapon_pool_name": "",
             "pool_up_map": {},  # pool_name -> up_name
         }
+
+        # Prefer structured pool data. It includes multi-UP joint/celebration pools.
+        try:
+            pool_data = await self.client.get_gacha_pool_chars()
+            if pool_data and "pools" in pool_data:
+                for pool in pool_data["pools"]:
+                    pool_name = str(
+                        pool.get("pool_name") or pool.get("name") or ""
+                    ).strip()
+                    pool_type = str(pool.get("pool_type") or "").strip()
+
+                    up_names = self._normalize_up_names(
+                        pool.get("up_char_names")
+                        or pool.get("up_weapon_names")
+                        or pool.get("up_char_name")
+                        or pool.get("up_weapon_name")
+                        or pool.get("up_chars")
+                        or pool.get("up_weapons")
+                    )
+                    if not up_names:
+                        for field in ("star6_chars", "star6_weapons"):
+                            for item in pool.get(field, []) or []:
+                                if item.get("is_up"):
+                                    up_names.extend(
+                                        self._normalize_up_names(item.get("name"))
+                                    )
+                    up_names = list(dict.fromkeys(up_names))
+                    self._merge_pool_up_names(up_info, pool_name, up_names)
+
+                    if pool.get("is_current") or pool.get("is_active"):
+                        if pool_type in ("limited", "joint") and up_names:
+                            up_info["char_up_names"] = up_names
+                            up_info["active_char_pool_name"] = pool_name
+                        elif pool_type == "weapon" and up_names:
+                            up_info["weapon_up_name"] = up_names[0]
+                            up_info["active_weapon_pool_name"] = pool_name
+        except Exception as e:
+            logger.warning(f"Failed to get UP info from pool chars: {e}")
 
         # Try to get from wiki activities
         try:
@@ -2730,7 +2863,7 @@ class EndfieldPlugin(Star):
                 if char_activity:
                     up_str = str(char_activity.get("up", "")).strip()
                     if up_str:
-                        up_info["char_up_names"] = [up_str]
+                        up_info["char_up_names"] = self._normalize_up_names(up_str)
                     # Extract pool name from activity name (e.g., "特许寻访·热烈色彩")
                     name = char_activity.get("name", "")
                     if "·" in name:
@@ -2762,7 +2895,7 @@ class EndfieldPlugin(Star):
                     up_str = str(act.get("up", "")).strip()
                     if name and up_str and "·" in name:
                         pool_name = name.split("·", 1)[1].strip()
-                        up_info["pool_up_map"][pool_name] = up_str
+                        self._merge_pool_up_names(up_info, pool_name, up_str)
         except Exception as e:
             logger.warning(f"Failed to get UP info from wiki activities: {e}")
 
@@ -2776,7 +2909,9 @@ class EndfieldPlugin(Star):
                     if current_pool:
                         up_chars = current_pool.get("up_char_names", [])
                         if up_chars:
-                            up_info["char_up_names"] = up_chars
+                            up_info["char_up_names"] = self._normalize_up_names(
+                                up_chars
+                            )
                         else:
                             up_char = str(current_pool.get("up_char_name", "")).strip()
                             if up_char:
@@ -2790,12 +2925,12 @@ class EndfieldPlugin(Star):
                         p_name = str(p.get("pool_name", "")).strip()
                         p_ups = p.get("up_char_names", [])
                         if p_name and p_ups:
-                            up_info["pool_up_map"][p_name] = p_ups[0]
+                            self._merge_pool_up_names(up_info, p_name, p_ups)
                     for p in stats.get("weapon_pool_periods", []):
                         p_name = str(p.get("pool_name", "")).strip()
                         p_ups = p.get("up_weapon_names", [])
                         if p_name and p_ups:
-                            up_info["pool_up_map"][p_name] = p_ups[0]
+                            self._merge_pool_up_names(up_info, p_name, p_ups)
             except Exception as e:
                 logger.warning(f"Failed to get UP info from global stats: {e}")
 
@@ -2809,19 +2944,15 @@ class EndfieldPlugin(Star):
         if not name:
             return False
 
-        # Check pool-specific UP map first (for historical pools)
-        pool_up = None
-        for p_name, u_name in up_info.get("pool_up_map", {}).items():
-            if pool_name == p_name or p_name in pool_name or pool_name in p_name:
-                pool_up = u_name
-                break
+        # Check pool-specific UP map first (for historical and multi-UP pools).
+        pool_up_names = self._get_pool_up_names(pool_name, up_info)
+        for up_name in pool_up_names:
+            if name == up_name or name in up_name or up_name in name:
+                return True
 
-        if pool_up:
-            return name == pool_up or name in pool_up or pool_up in name
-
-        # For limited character pool, check against current UP characters
-        if pool_key == "limited":
-            up_chars = up_info.get("char_up_names", [])
+        # For featured character pools, check against current UP characters.
+        if pool_key in ("limited", "joint"):
+            up_chars = self._normalize_up_names(up_info.get("char_up_names", []))
             for up_char in up_chars:
                 if name == up_char or name in up_char or up_char in name:
                     return True
@@ -2866,9 +2997,9 @@ class EndfieldPlugin(Star):
         up_6_count = 0
         max_pity = 40 if pool_key == "weapon" else 80
 
-        # Determine if this is a limited pool with UP
-        is_limited_pool = pool_key == "limited" or (
-            pool_name in up_info.get("pool_up_map", {})
+        # Determine if this is a featured pool with UP.
+        is_limited_pool = pool_key in ("limited", "joint") or bool(
+            self._get_pool_up_names(pool_name, up_info)
         )
         # Standard and beginner pools don't have UP/wai tags
         no_wai_tag = pool_key in ["standard", "beginner"]
@@ -2900,7 +3031,7 @@ class EndfieldPlugin(Star):
                 seq_id = str(r.get("seq_id", ""))
                 display_pity = (
                     seq_id_to_pity.get(seq_id, pity_count)
-                    if pool_key == "limited"
+                    if pool_key in ("limited", "joint")
                     else pity_count
                 )
 
@@ -2916,7 +3047,9 @@ class EndfieldPlugin(Star):
                         else "yellow"
                         if display_pity < (max_pity * 0.9)
                         else "red",
-                        "url": await self.get_b64(icon_map.get(name, "")),
+                        "url": await self.get_b64(
+                            self._find_gacha_icon_url(icon_map, name)
+                        ),
                         "fiveStars": [],
                         "refLinePercent": None,
                     }
@@ -2936,8 +3069,8 @@ class EndfieldPlugin(Star):
                 if int(r.get("rarity", 0)) == 6:
                     has_free_6 = True
                     name = str(r.get("char_name") or r.get("item_name", "")).strip()
-                    # Only limited pools show the 6-star free pull images
-                    if pool_key == "limited":
+                    # Only featured character pools show the 6-star free pull images.
+                    if pool_key in ("limited", "joint"):
                         images.append(
                             {
                                 "name": name,
@@ -2948,7 +3081,9 @@ class EndfieldPlugin(Star):
                                     100, int((free_pity_count / 10) * 100)
                                 ),
                                 "barColorLevel": "green",
-                                "url": await self.get_b64(icon_map.get(name, "")),
+                                "url": await self.get_b64(
+                                    self._find_gacha_icon_url(icon_map, name)
+                                ),
                                 "fiveStars": [],
                                 "refLinePercent": None,
                             }
@@ -2991,18 +3126,26 @@ class EndfieldPlugin(Star):
 
         # UP character avatar as semi-transparent background (for limited/character pools)
         up_char_avatar_b64 = ""
-        if pool_key in ("limited", "standard", "beginner"):
-            up_name = up_info.get("pool_up_map", {}).get(pool_name)
-            if not up_name and pool_key == "limited":
-                up_names = up_info.get("char_up_names", [])
-                up_name = up_names[0] if up_names else ""
+        if pool_key in ("limited", "joint", "standard", "beginner"):
+            up_names = self._get_pool_up_names(pool_name, up_info)
+            if not up_names and pool_key in ("limited", "joint"):
+                up_names = self._normalize_up_names(up_info.get("char_up_names", []))
+            up_name = up_names[0] if up_names else ""
             if up_name:
-                avatar_url = icon_map.get(up_name, "")
+                avatar_url = self._find_gacha_icon_url(icon_map, up_name)
                 if avatar_url:
                     up_char_avatar_b64 = await self.get_b64(avatar_url) or ""
+            if not up_char_avatar_b64:
+                for img in images:
+                    if img.get("url"):
+                        up_char_avatar_b64 = img["url"]
+                        break
 
         return {
             "poolName": pool_name,
+            "latestSort": max(
+                [self._get_gacha_record_sort_value(r) for r in records] or [0]
+            ),
             "totalRaw": total_pulls,
             "total": f"合计 {total_pulls} 抽 - 垫 {display_pity_since_last_6}"
             if display_pity_since_last_6 and display_pity_since_last_6 > 0
@@ -3031,11 +3174,11 @@ class EndfieldPlugin(Star):
             and display_pity_since_last_6 < (max_pity * 0.9)
             else "red",
             "pityFiveStars": [],
-            "freeTotal": free_pity_count if pool_key == "limited" else 0,
+            "freeTotal": free_pity_count if pool_key in ("limited", "joint") else 0,
             "inheritedPity": 0,
             "inheritedPityPercent": 0,
             "freeBarPercent": min(100, int((free_pity_count / 10) * 100))
-            if pool_key == "limited" and free_pity_count > 0
+            if pool_key in ("limited", "joint") and free_pity_count > 0
             else 0,
             "upCharAvatar": up_char_avatar_b64,
         }
